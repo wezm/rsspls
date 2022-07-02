@@ -5,18 +5,28 @@ use std::{env, fs};
 
 use clap::Parser;
 use eyre::{eyre, WrapErr};
+use futures::future;
+use kuchiki::traits::TendrilSink;
 use log::{error, info};
 use reqwest::Client;
+use rss::{Channel, ChannelBuilder, ItemBuilder};
 use serde::Deserialize;
 use simple_eyre::eyre;
 
 #[derive(Debug, Deserialize)]
 struct Config {
-    feed: Vec<Feed>,
+    feed: Vec<ChannelConfig>,
 }
 
 #[derive(Debug, Deserialize)]
-struct Feed {
+struct ChannelConfig {
+    title: String,
+    config: FeedConfig,
+}
+
+// TODO: Rename?
+#[derive(Debug, Deserialize)]
+struct FeedConfig {
     url: String,
     item: String,
     heading: String,
@@ -73,8 +83,6 @@ async fn try_main() -> eyre::Result<bool> {
         )
     })?;
 
-    dbg!(&config);
-
     let connect_timeout = Duration::from_secs(10);
     let timeout = Duration::from_secs(30);
     let client = Client::builder()
@@ -83,45 +91,109 @@ async fn try_main() -> eyre::Result<bool> {
         .build()
         .wrap_err("unable to build HTTP client")?;
 
-    let mut ok = true;
-    for feed in &config.feed {
-        let res = process(&client, &feed).await;
-        ok &= res.is_ok();
-        match res {
-            Ok(()) => {}
-            Err(report) => {
+    let futures = config.feed.into_iter().map(|feed| {
+        let client = client.clone(); // Client uses Arc internally
+        tokio::spawn(async move {
+            let res = process(&client, &feed).await;
+            let res = res.and_then(|ref channel| {
+                // TODO: channel.validate()
+                let mut stdout = std::io::stdout().lock();
+                channel
+                    .write_to(&mut stdout)
+                    .map(drop)
+                    .wrap_err_with(|| format!("unable to write feed for {}", feed.config.url))
+            });
+
+            if let Err(ref report) = res {
                 error!("{:?}", report);
             }
-        }
-    }
+            res.is_ok()
+        })
+    });
+
+    // Run all the futures at the same time
+    // The ? here will fail on an error if the JoinHandle fails
+    let ok = future::try_join_all(futures)
+        .await?
+        .into_iter()
+        .fold(true, |ok, succeeded| ok & succeeded);
 
     Ok(ok)
 }
 
-async fn process(client: &Client, feed: &Feed) -> eyre::Result<()> {
-    info!("processing {}", feed.url);
+async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Result<Channel> {
+    let config = &channel_config.config;
+    info!("processing {}", config.url);
     let resp = client
-        .get(&feed.url)
+        .get(&config.url)
         .send()
         .await
-        .wrap_err_with(|| format!("unable to fetch {}", feed.url))?;
+        .wrap_err_with(|| format!("unable to fetch {}", config.url))?;
 
     // Check response
     let status = resp.status();
     if !status.is_success() {
         return Err(eyre!(
             "failed to fetch {}: {} {}",
-            feed.url,
+            config.url,
             status.as_str(),
             status.canonical_reason().unwrap_or("Unknown Status")
         ));
     }
 
     // Read body
-    // TODO: Handle encodings other than UTF-8
     let html = resp.text().await.wrap_err("unable to read response body")?;
 
-    dbg!(&html);
+    let doc = kuchiki::parse_html().one(html);
+    let mut items = Vec::new();
+    for item in doc
+        .select(&config.item)
+        .map_err(|()| eyre!("invalid selector for item: {}", config.item))?
+    {
+        let title = item
+            .as_node()
+            .select_first(&config.heading)
+            .map_err(|()| eyre!("invalid selector for title: {}", config.heading))?;
 
-    Ok(())
+        // TODO: Need to make links absolute (probably ones in content too)
+        let attrs = title.attributes.borrow();
+        let link = attrs
+            .get("href")
+            .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
+
+        let summary = config
+            .summary
+            .as_ref()
+            .map(|selector| {
+                item.as_node()
+                    .select_first(selector)
+                    .map_err(|()| eyre!("invalid selector for summary: {}", selector))
+            })
+            .transpose()?;
+        let date = config
+            .date
+            .as_ref()
+            .map(|selector| {
+                item.as_node()
+                    .select_first(selector)
+                    .map_err(|()| eyre!("invalid selector for date: {}", selector))
+            })
+            .transpose()?;
+
+        let rss_item = ItemBuilder::default()
+            .title(title.text_contents())
+            .link(Some(link.to_string()))
+            .pub_date(date.map(|node| node.text_contents())) // TODO: Format as RFC 2822 date
+            .content(summary.map(|node| node.text_contents()))
+            .build();
+        items.push(rss_item);
+    }
+
+    let channel = ChannelBuilder::default()
+        .title(&channel_config.title)
+        .generator(Some(String::from("RSS Please")))
+        .items(items)
+        .build();
+
+    Ok(channel)
 }
