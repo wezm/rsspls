@@ -1,2 +1,3 @@
 # rsspls
-Generate an RSS feed from a website
+
+Generate an RSS feed from a website.
