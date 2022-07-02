@@ -13,7 +13,7 @@ use kuchiki::traits::TendrilSink;
 use kuchiki::{ElementData, NodeDataRef};
 use log::{debug, error, info, warn};
 use reqwest::Client;
-use rss::{Channel, ChannelBuilder, ItemBuilder};
+use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
 use simple_eyre::eyre;
 
@@ -210,10 +210,12 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
             .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
         let description = extract_description(config, &item)?;
         let date = extract_pub_date(config, &item)?;
+        let guid = GuidBuilder::default().value(link).permalink(false).build();
 
         let rss_item = ItemBuilder::default()
             .title(title.text_contents())
             .link(Some(link.to_string()))
+            .guid(Some(guid))
             .pub_date(date.map(|date| date.to_rfc2822()))
             .description(description)
             .build();
