@@ -1,9 +1,12 @@
-use std::path::PathBuf;
+mod cli;
+
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 use std::{env, fs};
 
-use clap::Parser;
+use crate::eyre::Report;
 use eyre::{eyre, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
@@ -15,12 +18,19 @@ use simple_eyre::eyre;
 
 #[derive(Debug, Deserialize)]
 struct Config {
+    rsspls: RssplsConfig,
     feed: Vec<ChannelConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RssplsConfig {
+    output: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct ChannelConfig {
     title: String,
+    filename: String,
     config: FeedConfig,
 }
 
@@ -32,15 +42,6 @@ struct FeedConfig {
     heading: String,
     summary: Option<String>,
     date: Option<String>,
-}
-
-/// Generate an RSS feed from websites
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Cli {
-    /// path to configuration file
-    #[clap(short, long, value_parser)]
-    config: Option<PathBuf>,
 }
 
 const RSSPLS_LOG: &str = "RSSPLS_LOG";
@@ -65,11 +66,21 @@ async fn try_main() -> eyre::Result<bool> {
     }
     pretty_env_logger::try_init_custom_env(RSSPLS_LOG)?;
 
-    let cli = Cli::parse();
+    let cli = cli::parse_args().wrap_err("unable to parse CLI arguments")?;
+    let cli = match cli {
+        Some(cli) => cli,
+        // Help or version info was printed and we should return
+        None => return Ok(true),
+    };
 
-    let config_path = cli
-        .config
-        .ok_or_else(|| eyre!("--config is required (for now)"))?;
+    // Determine the config file path and read it
+    let xdg_dirs = xdg::BaseDirectories::with_prefix("rsspls")
+        .wrap_err("unable to determine home directory of current user")?;
+    let config_path = cli.config_path.ok_or(()).or_else(|()| {
+        xdg_dirs
+            .place_config_file("feeds.toml")
+            .wrap_err("unable to create path to config file")
+    })?;
     let raw_config = fs::read(&config_path).wrap_err_with(|| {
         format!(
             "unable to read configuration file: {}",
@@ -83,6 +94,20 @@ async fn try_main() -> eyre::Result<bool> {
         )
     })?;
 
+    // Ensure output directory exists
+    let output_dir = cli.output_path.or_else(|| config.rsspls.output.map(|ref path| PathBuf::from(path)))
+        .ok_or_else(|| eyre!("output directory must be supplied via --output or be present in configuration file"))?;
+
+    if !output_dir.exists() {
+        fs::create_dir_all(&output_dir).wrap_err_with(|| {
+            format!(
+                "unable to create output directory: {}",
+                output_dir.display()
+            )
+        })?;
+    }
+
+    // Set up the HTTP client
     let connect_timeout = Duration::from_secs(10);
     let timeout = Duration::from_secs(30);
     let client = Client::builder()
@@ -91,18 +116,25 @@ async fn try_main() -> eyre::Result<bool> {
         .build()
         .wrap_err("unable to build HTTP client")?;
 
+    // Spawn the tasks
     let futures = config.feed.into_iter().map(|feed| {
         let client = client.clone(); // Client uses Arc internally
+        let output_dir = output_dir.clone();
         tokio::spawn(async move {
             let res = process(&client, &feed).await;
-            let res = res.and_then(|ref channel| {
-                // TODO: channel.validate()
-                let mut stdout = std::io::stdout().lock();
-                channel
-                    .write_to(&mut stdout)
-                    .map(drop)
-                    .wrap_err_with(|| format!("unable to write feed for {}", feed.config.url))
-            });
+            let res = res
+                .and_then(|ref channel| {
+                    // TODO: channel.validate()
+                    let filename = Path::new(&feed.filename);
+                    let output_path =
+                        output_dir.join(filename.file_name().ok_or_else(|| {
+                            eyre!("{} is not a valid file name", filename.display())
+                        })?);
+                    write_channel(channel, &output_path).wrap_err_with(|| {
+                        format!("unable to write output file: {}", output_path.display())
+                    })
+                })
+                .wrap_err_with(|| format!("error processing feed for {}", feed.config.url));
 
             if let Err(ref report) = res {
                 error!("{:?}", report);
@@ -119,6 +151,15 @@ async fn try_main() -> eyre::Result<bool> {
         .fold(true, |ok, succeeded| ok & succeeded);
 
     Ok(ok)
+}
+
+fn write_channel(channel: &Channel, output_path: &PathBuf) -> Result<(), Report> {
+    let mut file = File::create(&output_path)?;
+    info!("write {}", output_path.display());
+    channel
+        .write_to(&mut file)
+        .map(drop)
+        .wrap_err("unable to write feed")
 }
 
 async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Result<Channel> {
