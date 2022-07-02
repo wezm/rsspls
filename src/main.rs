@@ -1,13 +1,12 @@
 mod cli;
 
-use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 use std::{env, fs};
 
-use crate::eyre::Report;
-use eyre::{eyre, WrapErr};
+use atomicwrites::AtomicFile;
+use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
 use log::{error, info};
@@ -153,13 +152,20 @@ async fn try_main() -> eyre::Result<bool> {
     Ok(ok)
 }
 
-fn write_channel(channel: &Channel, output_path: &PathBuf) -> Result<(), Report> {
-    let mut file = File::create(&output_path)?;
-    info!("write {}", output_path.display());
-    channel
-        .write_to(&mut file)
-        .map(drop)
-        .wrap_err("unable to write feed")
+fn write_channel(channel: &Channel, output_path: &Path) -> Result<(), Report> {
+    // Write the new file into a temporary location, then move it into place
+    let file = AtomicFile::new(output_path, atomicwrites::AllowOverwrite);
+    file.write(|f| {
+        info!("write {}", output_path.display());
+        channel
+            .write_to(f)
+            .map(drop)
+            .wrap_err("unable to write feed")
+    })
+    .map_err(|err| match err {
+        atomicwrites::Error::Internal(atomic_err) => atomic_err.into(),
+        atomicwrites::Error::User(myerr) => myerr,
+    })
 }
 
 async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Result<Channel> {
