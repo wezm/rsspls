@@ -238,6 +238,7 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
 
     let channel = ChannelBuilder::default()
         .title(&channel_config.title)
+        .link(&config.url)
         .generator(Some(String::from("RSS Please")))
         .items(items)
         .build();
