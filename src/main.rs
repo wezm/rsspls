@@ -208,15 +208,23 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
             .get("href")
             .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
 
-        let summary = config
+        let description = config
             .summary
             .as_ref()
             .map(|selector| {
                 item.as_node()
                     .select_first(selector)
                     .map_err(|()| eyre!("invalid selector for summary: {}", selector))
+                    .and_then(|node| {
+                        let mut text = Vec::new();
+                        node.as_node()
+                            .serialize(&mut text)
+                            .wrap_err("unable to serialise description")
+                            .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has be legit Unicode)
+                    })
             })
             .transpose()?;
+
         let date = config
             .date
             .as_ref()
@@ -231,7 +239,7 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
             .title(title.text_contents())
             .link(Some(link.to_string()))
             .pub_date(date.map(|node| node.text_contents())) // TODO: Format as RFC 2822 date
-            .content(summary.map(|node| node.text_contents()))
+            .description(description)
             .build();
         items.push(rss_item);
     }
@@ -239,9 +247,17 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
     let channel = ChannelBuilder::default()
         .title(&channel_config.title)
         .link(&config.url)
-        .generator(Some(String::from("RSS Please")))
+        .generator(Some(version_string()))
         .items(items)
         .build();
 
     Ok(channel)
+}
+
+pub fn version_string() -> String {
+    format!(
+        "{} version {}",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION")
+    )
 }

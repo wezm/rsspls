@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use pico_args::Arguments;
 use simple_eyre::eyre;
 
+use crate::version_string;
+
 pub struct Cli {
     pub config_path: Option<PathBuf>,
     pub output_path: Option<PathBuf>,
@@ -32,14 +34,6 @@ fn pathbuf(s: &OsStr) -> Result<PathBuf, Infallible> {
 fn print_version() -> eyre::Result<Option<Cli>> {
     println!("{}", version_string());
     Ok(None)
-}
-
-fn version_string() -> String {
-    format!(
-        "{} version {}",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION")
-    )
 }
 
 pub fn print_usage() -> eyre::Result<Option<Cli>> {
