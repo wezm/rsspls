@@ -92,7 +92,7 @@ heading = "h3 a"
 # Optional CSS selector relative to `item` that will supply the content of the RSS item.
 summary = ".post-body"
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
-date = "time[datetime]"
+date = "time"
 
 # A second example feed
 [[feed]]
