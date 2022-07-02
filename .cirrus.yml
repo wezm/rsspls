@@ -1,0 +1,111 @@
+env:
+  PATH: "$HOME/.cargo/bin:$PATH"
+  RUST_VERSION: '1.61.0'
+  # AWS_ACCESS_KEY_ID: ENCRYPTED[d93099def908e5d9813218ea0c911b6e4042d8791c17b4dcd7758c16ef2da71a43683c8d3c29cf09b41a42415cc26c27]
+  # AWS_SECRET_ACCESS_KEY: ENCRYPTED[ac2928f856b4b3c90541ec007ab0ef88ea7e85e96fc8095dacfeebabd7ab134e3eaa3469464d54f2da0697ca0c144b3a]
+
+task:
+  name: Build (Debian Linux)
+  container:
+    image: debian:10-slim
+    cpu: 4
+  cargo_cache:
+    folder: $HOME/.cargo/registry
+    fingerprint_script: cat Cargo.lock
+  install_script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl gcc libc6-dev musl-tools
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+    - rustup target add x86_64-unknown-linux-musl
+    - mkdir ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
+  test_script:
+    - cargo test
+  publish_script: |
+    tag=$(git describe --exact-match HEAD 2>/dev/null || true)
+    if [ -n "$tag" ]; then
+      cargo build --release --target x86_64-unknown-linux-musl
+      tarball="git-grab-${tag}-x86_64-unknown-linux-musl.tar.gz"
+      strip target/x86_64-unknown-linux-musl/release/git-grab
+      tar zcf "$tarball" -C target/x86_64-unknown-linux-musl/release git-grab
+      ~/bin/upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+    fi
+
+task:
+  name: Build (FreeBSD)
+  freebsd_instance:
+    image_family: freebsd-13-0
+    cpu: 4
+  cargo_cache:
+    folder: $HOME/.cargo/registry
+    fingerprint_script: cat Cargo.lock
+  install_script:
+    - pkg install -y git-lite
+    - fetch -o - https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+    - fetch -o - https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
+  test_script:
+    - cargo test
+  publish_script: |
+    tag=$(git describe --exact-match HEAD 2>/dev/null || true)
+    if [ -n "$tag" ]; then
+      cargo build --release
+      tarball="git-grab-${tag}-amd64-unknown-freebsd.tar.gz"
+      strip target/release/git-grab
+      tar zcf "$tarball" -C target/release git-grab
+      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+    fi
+
+task:
+  name: Build (Mac OS)
+  osx_instance:
+    image: catalina-base
+  cargo_cache:
+    folder: $HOME/.cargo/registry
+    fingerprint_script: cat Cargo.lock
+  install_script:
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+    - curl -L https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-apple-darwin.tar.gz | tar xzf - -C /usr/local/bin
+  test_script:
+    - cargo test
+  publish_script: |
+    tag=$(git describe --exact-match HEAD 2>/dev/null || true)
+    if [ -n "$tag" ]; then
+      cargo build --release
+      tarball="git-grab-${tag}-x86_64-apple-darwin.tar.gz"
+      strip target/release/git-grab
+      tar zcf "$tarball" -C target/release git-grab
+      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+    fi
+
+task:
+  name: Build (Windows)
+  windows_container:
+    image: cirrusci/windowsservercore:cmake
+    cpu: 4
+  environment:
+    CIRRUS_SHELL: powershell
+  cargo_cache:
+    folder: $HOME\.cargo\registry
+    fingerprint_script: cat Cargo.lock
+  install_script:
+    - Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+    - .\rustup-init -y --profile minimal --default-toolchain $env:RUST_VERSION
+    - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
+    - Expand-Archive upload-to-s3.zip -DestinationPath .
+    - git fetch --tags
+  test_script:
+    - ~\.cargo\bin\cargo test
+  publish_script: |
+    try {
+      $tag=$(git describe --exact-match HEAD 2>$null)
+    } catch {
+      $tag=""
+    }
+    if ( $tag.Length -gt 0 ) {
+      ~\.cargo\bin\cargo build --release
+      $tarball="git-grab-$tag-x86_64-pc-windows-msvc.zip"
+      cd target\release
+      strip git-grab.exe
+      Compress-Archive .\git-grab.exe "$tarball"
+      cd ..\..
+      .\upload-to-s3 -b releases.wezm.net "target\release\$tarball" "git-grab/$tag/$tarball"
+    }
