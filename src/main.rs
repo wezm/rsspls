@@ -256,7 +256,7 @@ fn parse_date(node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> 
         .flatten()
         .and_then(|datetime| {
             debug!("trying datetime attribute");
-            anydate::parse(datetime.trim()).ok()
+            anydate::parse(trim_date(&datetime)).ok()
         })
         .map(|x| {
             debug!("using datetime attribute");
@@ -264,13 +264,18 @@ fn parse_date(node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> 
         })
         .or_else(|| {
             let date = node.text_contents();
-            let date = date.trim();
+            let date = trim_date(&date);
             anydate::parse(date)
                 .map_err(|_err| {
                     warn!("unable to parse date '{}'", date);
                 })
                 .ok()
         })
+}
+
+// Trim non-alphanumeric chars from either side of the string
+fn trim_date(s: &str) -> &str {
+    s.trim_matches(|c: char| !c.is_alphanumeric())
 }
 
 fn extract_description(
@@ -301,4 +306,25 @@ pub fn version_string() -> String {
         env!("CARGO_PKG_NAME"),
         env!("CARGO_PKG_VERSION")
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_trim_date() {
+        assert_eq!(trim_date("2021-05-20 —"), "2021-05-20");
+        assert_eq!(
+            trim_date("2022-04-20T06:38:27+10:00"),
+            "2022-04-20T06:38:27+10:00"
+        );
+    }
+
+    // #[test]
+    // fn test_anydate() {
+    //     assert!(anydate::parse("Friday, January 8th, 2021").is_ok()); // fail
+    //     assert!(anydate::parse("Friday, January 8, 2021").is_ok()); // fail
+    //     assert!(anydate::parse("January 8, 2021").is_ok()); // ok
+    // }
 }
