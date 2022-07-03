@@ -6,6 +6,16 @@ authors = [
     "Wesley Moore <wes@wezm.net>"
 ]
 
+homepage = "https://github.com/wezm/rsspls"
+repository = "https://github.com/wezm/rsspls.git"
+
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+
+description = "Generate RSS feeds from websites"
+keywords = ["rss", "cli", "html", "css", "webpage", "feed"]
+categories = ["command-line-utilities", "web-programming"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
