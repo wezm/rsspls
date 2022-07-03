@@ -21,6 +21,6 @@ reqwest = { version = "0.11.11", default-features = false, features = ["rustls-t
 rss = "2.0.1"
 serde = { version = "1.0.137", features = ["derive"] }
 simple-eyre = "0.3.1"
-tokio = { version = "1.19.2", features = ["full"] }
+tokio = { version = "1.19.2", features = ["rt-multi-thread", "macros"] }
 toml = "0.5.9"
 xdg = "2.4.1"
