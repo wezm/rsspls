@@ -5,17 +5,17 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::{env, fs};
+use std::{env, fs, mem};
 
 use atomicwrites::AtomicFile;
 use chrono::{DateTime, FixedOffset};
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
-use kuchiki::{ElementData, NodeDataRef};
+use kuchiki::{ElementData, NodeDataRef, NodeRef};
 use log::{debug, error, info, warn};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use reqwest::{Client, RequestBuilder, StatusCode};
+use reqwest::{Client, RequestBuilder, StatusCode, Url};
 use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
 use simple_eyre::eyre;
@@ -231,18 +231,22 @@ async fn process_feed(
 ) -> eyre::Result<ProcessResult> {
     let config = &channel_config.config;
     info!("processing {}", config.url);
-    let req = client.get(&config.url);
+    let url: Url = config
+        .url
+        .parse()
+        .wrap_err_with(|| format!("unable to parse {} as a URL", config.url))?;
+    let req = client.get(url.clone());
     let req = maybe_add_cache_headers(req, cached_headers);
     let resp = req
         .send()
         .await
-        .wrap_err_with(|| format!("unable to fetch {}", config.url))?;
+        .wrap_err_with(|| format!("unable to fetch {}", url))?;
 
     // Check response
     let status = resp.status();
     if status == StatusCode::NOT_MODIFIED {
         // Cache hit, nothing to do
-        info!("{} is unmodified", channel_config.config.url);
+        info!("{} is unmodified", url);
         return Ok(ProcessResult::NotModified);
     }
 
@@ -270,6 +274,9 @@ async fn process_feed(
     let html = resp.text().await.wrap_err("unable to read response body")?;
 
     let doc = kuchiki::parse_html().one(html);
+    let base_url = Url::options().base_url(Some(&url));
+    rewrite_urls(&doc, &base_url)?;
+
     let mut items = Vec::new();
     for item in doc
         .select(&config.item)
@@ -290,7 +297,7 @@ async fn process_feed(
 
         let rss_item = ItemBuilder::default()
             .title(title.text_contents())
-            .link(Some(link.to_string()))
+            .link(base_url.parse(link).ok().map(|u| u.to_string()))
             .guid(Some(guid))
             .pub_date(date.map(|date| date.to_rfc2822()))
             .description(description)
@@ -300,7 +307,7 @@ async fn process_feed(
 
     let channel = ChannelBuilder::default()
         .title(&channel_config.title)
-        .link(&config.url)
+        .link(url.to_string())
         .generator(Some(version_string()))
         .items(items)
         .build();
@@ -309,6 +316,22 @@ async fn process_feed(
         channel,
         headers: serialised_headers,
     })
+}
+
+fn rewrite_urls(doc: &NodeRef, base_url: &url::ParseOptions) -> eyre::Result<()> {
+    for el in doc
+        .select("*[href]")
+        .map_err(|()| eyre!("unable to select links for rewriting"))?
+    {
+        let mut attrs = el.attributes.borrow_mut();
+        attrs.get_mut("href").and_then(|href| {
+            let mut url = base_url.parse(href).ok().map(|url| url.to_string())?;
+            mem::swap(href, &mut url);
+            Some(())
+        });
+    }
+
+    Ok(())
 }
 
 fn maybe_add_cache_headers(
@@ -444,4 +467,16 @@ mod tests {
     //     assert!(anydate::parse("Friday, January 8, 2021").is_ok()); // fail
     //     assert!(anydate::parse("January 8, 2021").is_ok()); // ok
     // }
+
+    #[test]
+    fn test_rewrite_urls() {
+        let html = r#"<html><body><a href="/cool">cool thing</a> <div href="dont-do-this">ok</div><a href="http://example.com">example</a></body></html>"#;
+        let expected = r#"<html><head></head><body><a href="http://example.com/cool">cool thing</a> <div href="http://example.com/dont-do-this">ok</div><a href="http://example.com/">example</a></body></html>"#;
+        let doc = kuchiki::parse_html().one(html);
+        let base_url = "http://example.com".parse().unwrap();
+        let base = Url::options().base_url(Some(&base_url));
+        rewrite_urls(&doc, &base).unwrap();
+        let rewritten = doc.to_string();
+        assert_eq!(rewritten, expected);
+    }
 }
