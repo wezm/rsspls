@@ -35,8 +35,39 @@
 The idea is that you will then subscribe to the generated feeds in you feed
 reader. This will typically require the feeds to be hosted via a web server.
 
-Download
+Contents
 --------
+
+* [Install](#install)
+  * [Package Manager](#package-manager)
+  * [Pre-compiled Binary](#pre-compiled-binary)
+* [Usage](#usage)
+  * [Configuration](#configuration)
+  * [Hosting](#hosting)
+  * [Caveats](#caveats)
+  * [Caching](#caching)
+* [Build From Source](#build-from-source)
+  * [From Git Checkout or Release Tarball](#from-git-checkout-or-release-tarball)
+  * [From crates.io](#from-cratesio)
+* [Credits](#credits)
+* [Licence](#licence)
+
+Install
+-------
+
+`rsspls` can be installed via one of the following methods:
+
+* [Package Manager](#package-manager)
+* [Pre-compiled Binary](#pre-compiled-binary)
+* [Build From Source](#build-from-source)
+
+### Package Manager
+
+`rsspls` is packaged in these package managers:
+
+* [AUR](https://aur.archlinux.org/packages/rsspls)
+
+### Pre-compiled Binary
 
 Pre-compiled binaries are available for a number of platforms.
 They require no additional dependencies on your computer.
@@ -166,7 +197,7 @@ request on subsequent runs and will not regenerate the feed if the server
 responds with 304 Not Modified. Cache data is stored in
 `$XDG_CACHE_HOME/rsspls`, which defaults to `~/.cache/rsspls`.
 
-Build from Source
+Build From Source
 -----------------
 
 **Minimum Supported Rust Version:** 1.61.0
