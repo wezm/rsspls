@@ -5,7 +5,7 @@
 
 <div align="center">
   <strong>A small tool (<code>rsspls</code>) to generate RSS feeds from web pages that lack them.
-    It runs on BSD, Linux, macOS, Windows, and more.</strong>
+    It runs on BSD, Linux, macOS, <!-- Windows, -->and more.</strong>
 </div>
 
 <br>
@@ -44,7 +44,7 @@ They require no additional dependencies on your computer.
 * [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.1.1rsspls-0.1.1amd64-unknown-freebsd.tar.gz)
 * [Linux x86\_64](https://releases.wezm.net/rsspls/0.1.1rsspls-0.1.1x86_64-unknown-linux-musl.tar.gz)
 * [MacOS x86\_64](https://releases.wezm.net/rsspls/0.1.1rsspls-0.1.1x86_64-apple-darwin.tar.gz)
-* [Windows x86\_64](https://releases.wezm.net/rsspls/0.1.1rsspls-0.1.1x86_64-pc-windows-msvc.zip)
+<!-- * [Windows x86\_64](https://releases.wezm.net/rsspls/0.1.1rsspls-0.1.1x86_64-pc-windows-msvc.zip) -->
 
 Example to download and extract a binary:
 
