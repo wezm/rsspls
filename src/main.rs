@@ -1,7 +1,9 @@
 mod cli;
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, fs};
 
@@ -12,10 +14,13 @@ use futures::future;
 use kuchiki::traits::TendrilSink;
 use kuchiki::{ElementData, NodeDataRef};
 use log::{debug, error, info, warn};
-use reqwest::Client;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::{Client, RequestBuilder, StatusCode};
 use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
 use simple_eyre::eyre;
+
+type XdgDirs = Arc<Mutex<xdg::BaseDirectories>>;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -117,27 +122,21 @@ async fn try_main() -> eyre::Result<bool> {
         .build()
         .wrap_err("unable to build HTTP client")?;
 
+    // Wrap up xdg::BaseDirectories for sharing between tasks. Mutex is used so that only one
+    // thread at a time will attempt to create cache directories.
+    let xdg_dirs = Arc::new(Mutex::new(xdg_dirs));
+
     // Spawn the tasks
     let futures = config.feed.into_iter().map(|feed| {
         let client = client.clone(); // Client uses Arc internally
         let output_dir = output_dir.clone();
+        let xdg_dirs = Arc::clone(&xdg_dirs);
         tokio::spawn(async move {
-            let res = process(&client, &feed).await;
-            let res = res
-                .and_then(|ref channel| {
-                    // TODO: channel.validate()
-                    let filename = Path::new(&feed.filename);
-                    let output_path =
-                        output_dir.join(filename.file_name().ok_or_else(|| {
-                            eyre!("{} is not a valid file name", filename.display())
-                        })?);
-                    write_channel(channel, &output_path).wrap_err_with(|| {
-                        format!("unable to write output file: {}", output_path.display())
-                    })
-                })
-                .wrap_err_with(|| format!("error processing feed for {}", feed.config.url));
-
+            let res = process(&feed, &client, output_dir, xdg_dirs).await;
             if let Err(ref report) = res {
+                // Eat errors when processing feeds so that we don't stop processing the others.
+                // Errors are reported, then we return a boolean indicating success or not, which
+                // is used to set the exit status of the program later.
                 error!("{:?}", report);
             }
             res.is_ok()
@@ -152,6 +151,53 @@ async fn try_main() -> eyre::Result<bool> {
         .fold(true, |ok, succeeded| ok & succeeded);
 
     Ok(ok)
+}
+
+async fn process(
+    feed: &ChannelConfig,
+    client: &Client,
+    output_dir: PathBuf,
+    xdg_dirs: XdgDirs,
+) -> Result<(), Report> {
+    // Generate paths up front so we report any errors before making requests
+    let filename = Path::new(&feed.filename);
+    let filename = filename
+        .file_name()
+        .map(Path::new)
+        .ok_or_else(|| eyre!("{} is not a valid file name", filename.display()))?;
+    let output_path = output_dir.join(filename);
+    let cache_filename = filename.with_extension("toml");
+    let cache_path = {
+        let xdg_dirs = xdg_dirs
+            .lock()
+            .map_err(|_| eyre!("unable to acquire mutex"))?;
+        xdg_dirs
+            .place_cache_file(&cache_filename)
+            .wrap_err("unable to create path to cache file")
+    }?;
+    let cached_headers = deserialise_cached_headers(&cache_path);
+
+    process_feed(&client, &feed, &cached_headers)
+        .await
+        .and_then(|ref process_result| {
+            match process_result {
+                ProcessResult::NotModified => Ok(()),
+                ProcessResult::Ok { channel, headers } => {
+                    // TODO: channel.validate()
+                    write_channel(channel, &output_path).wrap_err_with(|| {
+                        format!("unable to write output file: {}", output_path.display())
+                    })?;
+
+                    // Update the cache
+                    if let Some(headers) = headers {
+                        fs::write(cache_path, headers).wrap_err("unable to write to cache")?;
+                    }
+
+                    Ok(())
+                }
+            }
+        })
+        .wrap_err_with(|| format!("error processing feed for {}", feed.config.url))
 }
 
 fn write_channel(channel: &Channel, output_path: &Path) -> Result<(), Report> {
@@ -170,17 +216,36 @@ fn write_channel(channel: &Channel, output_path: &Path) -> Result<(), Report> {
     })
 }
 
-async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Result<Channel> {
+enum ProcessResult {
+    NotModified,
+    Ok {
+        channel: Channel,
+        headers: Option<String>,
+    },
+}
+
+async fn process_feed(
+    client: &Client,
+    channel_config: &ChannelConfig,
+    cached_headers: &Option<HeaderMap>,
+) -> eyre::Result<ProcessResult> {
     let config = &channel_config.config;
     info!("processing {}", config.url);
-    let resp = client
-        .get(&config.url)
+    let req = client.get(&config.url);
+    let req = maybe_add_cache_headers(req, cached_headers);
+    let resp = req
         .send()
         .await
         .wrap_err_with(|| format!("unable to fetch {}", config.url))?;
 
     // Check response
     let status = resp.status();
+    if status == StatusCode::NOT_MODIFIED {
+        // Cache hit, nothing to do
+        info!("{} is unmodified", channel_config.config.url);
+        return Ok(ProcessResult::NotModified);
+    }
+
     if !status.is_success() {
         return Err(eyre!(
             "failed to fetch {}: {} {}",
@@ -189,6 +254,17 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
             status.canonical_reason().unwrap_or("Unknown Status")
         ));
     }
+
+    // Collect the headers for later
+    let headers: Vec<_> = resp
+        .headers()
+        .iter()
+        .filter_map(|(name, value)| value.to_str().ok().map(|val| (name.as_str(), val)))
+        .collect();
+    let map: HashMap<_, _> = [("headers", headers)].into_iter().collect();
+    let serialised_headers = toml::to_string(&map)
+        .map_err(|err| warn!("unable to serialise headers: {}", err))
+        .ok();
 
     // Read body
     let html = resp.text().await.wrap_err("unable to read response body")?;
@@ -229,7 +305,32 @@ async fn process(client: &Client, channel_config: &ChannelConfig) -> eyre::Resul
         .items(items)
         .build();
 
-    Ok(channel)
+    Ok(ProcessResult::Ok {
+        channel,
+        headers: serialised_headers,
+    })
+}
+
+fn maybe_add_cache_headers(
+    mut req: RequestBuilder,
+    cached_headers: &Option<HeaderMap>,
+) -> RequestBuilder {
+    use reqwest::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED};
+
+    let headers = match cached_headers {
+        Some(headers) => headers,
+        None => return req,
+    };
+
+    if let Some(last_modified) = headers.get(LAST_MODIFIED) {
+        debug!("add If-Modified-Since: {:?}", last_modified.to_str().ok());
+        req = req.header(IF_MODIFIED_SINCE, last_modified);
+    }
+    if let Some(etag) = headers.get(ETAG) {
+        debug!("add If-None-Match: {:?}", etag.to_str().ok());
+        req = req.header(IF_NONE_MATCH, etag);
+    }
+    req
 }
 
 fn extract_pub_date(
@@ -294,10 +395,26 @@ fn extract_description(
                     node.as_node()
                         .serialize(&mut text)
                         .wrap_err("unable to serialise description")
-                        .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has be legit Unicode)
+                        .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has to be legit Unicode)
                 })
         })
         .transpose()
+}
+
+fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>> {
+    let raw = fs::read(path).ok()?;
+    let mut map: HashMap<String, Vec<(String, String)>> = toml::from_slice(&raw).ok()?;
+    let pairs = map.remove("headers")?;
+    Some(
+        pairs
+            .into_iter()
+            .filter_map(|(name, value)| {
+                HeaderName::try_from(name)
+                    .ok()
+                    .zip(HeaderValue::try_from(value).ok())
+            })
+            .collect(),
+    )
 }
 
 pub fn version_string() -> String {

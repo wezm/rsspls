@@ -60,10 +60,14 @@ OPTIONS:
             Prints version information
 
 FILES:
-     ~/.config/rsspls/feeds.toml    rsspls configuration file.
+     ~/$XDG_CONFIG_HOME/rsspls/feeds.toml    rsspls configuration file.
 
-     ~/.config/rsspls               Configuration directory.
-                                    See also XDG_CONFIG_HOME.
+     ~/$XDG_CONFIG_HOME/rsspls               Configuration directory.
+
+     ~/XDG_CACHE_HOME/rsspls                 Cache directory.
+
+     Note: XDG_CONFIG_HOME defaults to ~/.config, XDG_CACHE_HOME
+     defaults to ~/.cache.
 
 AUTHOR
     {}
