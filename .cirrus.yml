@@ -23,11 +23,11 @@ task:
   publish_script: |
     tag=$(git describe --exact-match HEAD 2>/dev/null || true)
     if [ -n "$tag" ]; then
-      cargo build --release --target x86_64-unknown-linux-musl
-      tarball="git-grab-${tag}-x86_64-unknown-linux-musl.tar.gz"
-      strip target/x86_64-unknown-linux-musl/release/git-grab
-      tar zcf "$tarball" -C target/x86_64-unknown-linux-musl/release git-grab
-      ~/bin/upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+      cargo build --release --locked --target x86_64-unknown-linux-musl
+      tarball="rsspls-${tag}-x86_64-unknown-linux-musl.tar.gz"
+      strip target/x86_64-unknown-linux-musl/release/rsspls
+      tar zcf "$tarball" -C target/x86_64-unknown-linux-musl/release rsspls
+      ~/bin/upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
     fi
 
 task:
@@ -47,11 +47,11 @@ task:
   publish_script: |
     tag=$(git describe --exact-match HEAD 2>/dev/null || true)
     if [ -n "$tag" ]; then
-      cargo build --release
-      tarball="git-grab-${tag}-amd64-unknown-freebsd.tar.gz"
-      strip target/release/git-grab
-      tar zcf "$tarball" -C target/release git-grab
-      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+      cargo build --release --locked
+      tarball="rsspls-${tag}-amd64-unknown-freebsd.tar.gz"
+      strip target/release/rsspls
+      tar zcf "$tarball" -C target/release rsspls
+      upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
     fi
 
 task:
@@ -69,11 +69,11 @@ task:
   publish_script: |
     tag=$(git describe --exact-match HEAD 2>/dev/null || true)
     if [ -n "$tag" ]; then
-      cargo build --release
-      tarball="git-grab-${tag}-x86_64-apple-darwin.tar.gz"
-      strip target/release/git-grab
-      tar zcf "$tarball" -C target/release git-grab
-      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+      cargo build --release --locked
+      tarball="rsspls-${tag}-x86_64-apple-darwin.tar.gz"
+      strip target/release/rsspls
+      tar zcf "$tarball" -C target/release rsspls
+      upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
     fi
 
 task:
@@ -101,11 +101,11 @@ task:
       $tag=""
     }
     if ( $tag.Length -gt 0 ) {
-      ~\.cargo\bin\cargo build --release
-      $tarball="git-grab-$tag-x86_64-pc-windows-msvc.zip"
+      ~\.cargo\bin\cargo build --release --locked
+      $tarball="rsspls-$tag-x86_64-pc-windows-msvc.zip"
       cd target\release
-      strip git-grab.exe
-      Compress-Archive .\git-grab.exe "$tarball"
+      strip rsspls.exe
+      Compress-Archive .\rsspls.exe "$tarball"
       cd ..\..
-      .\upload-to-s3 -b releases.wezm.net "target\release\$tarball" "git-grab/$tag/$tarball"
+      .\upload-to-s3 -b releases.wezm.net "target\release\$tarball" "rsspls/$tag/$tarball"
     }
