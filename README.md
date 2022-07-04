@@ -32,7 +32,7 @@
 * Create a feed of the product page for a company, so you know when new
   products are added.
 
-The idea is that you will then subscribe to the generated feeds in you feed
+The idea is that you will then subscribe to the generated feeds in your feed
 reader. This will typically require the feeds to be hosted via a web server.
 
 Contents
@@ -88,7 +88,7 @@ Usage
 
 ### Configuration
 
-Unless specfifed via the `--config` command line option
+Unless specified via the `--config` command line option
 `rsspls` reads its configuration from `$XDG_CONFIG_HOME/rsspls/feeds.toml`.
 If `XDG_CONFIG_HOME` is unset it defaults to `~/.config/rsspls/feeds.toml`.
 The configuration file is in [TOML][toml] format.
