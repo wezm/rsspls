@@ -1,5 +1,14 @@
 mod cli;
 
+#[cfg(windows)]
+mod dirs;
+
+#[cfg(not(windows))]
+mod xdg;
+
+#[cfg(not(windows))]
+use crate::xdg as dirs;
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -20,7 +29,7 @@ use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::Deserialize;
 use simple_eyre::eyre;
 
-type XdgDirs = Arc<Mutex<xdg::BaseDirectories>>;
+use crate::dirs::Dirs;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -80,11 +89,9 @@ async fn try_main() -> eyre::Result<bool> {
     };
 
     // Determine the config file path and read it
-    let xdg_dirs = xdg::BaseDirectories::with_prefix("rsspls")
-        .wrap_err("unable to determine home directory of current user")?;
+    let dirs = dirs::new()?;
     let config_path = cli.config_path.ok_or(()).or_else(|()| {
-        xdg_dirs
-            .place_config_file("feeds.toml")
+        dirs.place_config_file("feeds.toml")
             .wrap_err("unable to create path to config file")
     })?;
     let raw_config = fs::read(&config_path).wrap_err_with(|| {
@@ -124,15 +131,15 @@ async fn try_main() -> eyre::Result<bool> {
 
     // Wrap up xdg::BaseDirectories for sharing between tasks. Mutex is used so that only one
     // thread at a time will attempt to create cache directories.
-    let xdg_dirs = Arc::new(Mutex::new(xdg_dirs));
+    let dirs = Arc::new(Mutex::new(dirs));
 
     // Spawn the tasks
     let futures = config.feed.into_iter().map(|feed| {
         let client = client.clone(); // Client uses Arc internally
         let output_dir = output_dir.clone();
-        let xdg_dirs = Arc::clone(&xdg_dirs);
+        let dirs = Arc::clone(&dirs);
         tokio::spawn(async move {
-            let res = process(&feed, &client, output_dir, xdg_dirs).await;
+            let res = process(&feed, &client, output_dir, dirs).await;
             if let Err(ref report) = res {
                 // Eat errors when processing feeds so that we don't stop processing the others.
                 // Errors are reported, then we return a boolean indicating success or not, which
@@ -157,7 +164,7 @@ async fn process(
     feed: &ChannelConfig,
     client: &Client,
     output_dir: PathBuf,
-    xdg_dirs: XdgDirs,
+    dirs: Dirs,
 ) -> Result<(), Report> {
     // Generate paths up front so we report any errors before making requests
     let filename = Path::new(&feed.filename);
@@ -168,11 +175,8 @@ async fn process(
     let output_path = output_dir.join(filename);
     let cache_filename = filename.with_extension("toml");
     let cache_path = {
-        let xdg_dirs = xdg_dirs
-            .lock()
-            .map_err(|_| eyre!("unable to acquire mutex"))?;
-        xdg_dirs
-            .place_cache_file(&cache_filename)
+        let dirs = dirs.lock().map_err(|_| eyre!("unable to acquire mutex"))?;
+        dirs.place_cache_file(&cache_filename)
             .wrap_err("unable to create path to cache file")
     }?;
     let cached_headers = deserialise_cached_headers(&cache_path);

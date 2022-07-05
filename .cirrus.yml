@@ -86,7 +86,6 @@ task:
   cargo_cache:
     folder: $HOME\.cargo\registry
     fingerprint_script: cat Cargo.lock
-  skip_notifications: "true" # We currently fail to build on Windows
   install_script:
     - Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
     - .\rustup-init -y --profile minimal --default-toolchain $env:RUST_VERSION
