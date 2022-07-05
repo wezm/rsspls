@@ -66,20 +66,21 @@ Install
 `rsspls` is packaged in these package managers:
 
 * [AUR](https://aur.archlinux.org/packages/rsspls)
+* Homebrew: `brew install wezm/taps/rsspls`
 
 ### Pre-compiled Binary
 
 Pre-compiled binaries are available for a number of platforms.
 They require no additional dependencies on your computer.
 
-* [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-amd64-unknown-freebsd.tar.gz)
-* [Linux x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-unknown-linux-musl.tar.gz)
-* [MacOS x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-apple-darwin.tar.gz)
-* [Windows x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-pc-windows-msvc.zip)
+* [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.2.2/rsspls-0.2.2-amd64-unknown-freebsd.tar.gz)
+* [Linux x86\_64](https://releases.wezm.net/rsspls/0.2.2/rsspls-0.2.2-x86_64-unknown-linux-musl.tar.gz)
+* [MacOS x86\_64](https://releases.wezm.net/rsspls/0.2.2/rsspls-0.2.2-x86_64-apple-darwin.tar.gz)
+* [Windows x86\_64](https://releases.wezm.net/rsspls/0.2.2/rsspls-0.2.2-x86_64-pc-windows-msvc.zip)
 
 Example to download and extract a binary:
 
-    curl https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-unknown-linux-musl.tar.gz | tar zxf -
+    curl https://releases.wezm.net/rsspls/0.2.2/rsspls-0.2.2-x86_64-unknown-linux-musl.tar.gz | tar zxf -
 
 This will result in the `rsspls` binary in the current directory.
 
