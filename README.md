@@ -5,7 +5,7 @@
 
 <div align="center">
   <strong>A small tool (<code>rsspls</code>) to generate RSS feeds from web pages that lack them.
-    It runs on BSD, Linux, macOS, <!-- Windows, -->and more.</strong>
+    It runs on BSD, Linux, macOS, Windows, and more.</strong>
 </div>
 
 <br>
@@ -75,7 +75,7 @@ They require no additional dependencies on your computer.
 * [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-amd64-unknown-freebsd.tar.gz)
 * [Linux x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-unknown-linux-musl.tar.gz)
 * [MacOS x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-apple-darwin.tar.gz)
-<!-- * [Windows x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-pc-windows-msvc.zip) -->
+* [Windows x86\_64](https://releases.wezm.net/rsspls/0.2.1/rsspls-0.2.1-x86_64-pc-windows-msvc.zip)
 
 Example to download and extract a binary:
 
@@ -88,9 +88,15 @@ Usage
 
 ### Configuration
 
-Unless specified via the `--config` command line option
-`rsspls` reads its configuration from `$XDG_CONFIG_HOME/rsspls/feeds.toml`.
-If `XDG_CONFIG_HOME` is unset it defaults to `~/.config/rsspls/feeds.toml`.
+Unless specified via the `--config` command line option `rsspls` reads its
+configuration from one of the following paths:
+
+* UNIX-like systems:
+  * `$XDG_CONFIG_HOME/rsspls/feeds.toml`
+  * `~/.config/rsspls/feeds.toml` if `XDG_CONFIG_HOME` is unset.
+* Windows:
+  * `C:\Users\You\AppData\Roaming\rsspls\feeds.toml`
+  
 The configuration file is in [TOML][toml] format.
 
 The parts of the page to extract for the feed are specified using [CSS
@@ -195,7 +201,8 @@ Twitter) then `rsspls` will not work.
 When websites respond with cache headers `rsspls` will make a conditional
 request on subsequent runs and will not regenerate the feed if the server
 responds with 304 Not Modified. Cache data is stored in
-`$XDG_CACHE_HOME/rsspls`, which defaults to `~/.cache/rsspls`.
+`$XDG_CACHE_HOME/rsspls`, which defaults to `~/.cache/rsspls` on UNIX-like
+systems or `C:\Users\You\AppData\Local\rsspls` on Windows.
 
 Build From Source
 -----------------

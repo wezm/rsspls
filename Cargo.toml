@@ -34,4 +34,9 @@ simple-eyre = "0.3.1"
 tokio = { version = "1.19.2", features = ["rt-multi-thread", "macros"] }
 toml = "0.5.9"
 url = "2.2.2"
+
+[target.'cfg(windows)'.dependencies]
+dirs = "4.0.0"
+
+[target.'cfg(not(windows))'.dependencies]
 xdg = "2.4.1"
