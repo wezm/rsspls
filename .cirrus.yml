@@ -92,9 +92,9 @@ task:
     - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
     - Expand-Archive upload-to-s3.zip -DestinationPath .
     - git fetch --tags
+  # PowerShell it truly horrific and lacks a way to exit on external command failure so we have to check after every command
+  # https://stackoverflow.com/questions/48864988/powershell-with-git-command-error-handling-automatically-abort-on-non-zero-exi/48877892#48877892
   test_script: |
-    # PowerShell it truly horrific and lacks a way to exit on external command failure so we have to check after every command
-    # https://stackoverflow.com/questions/48864988/powershell-with-git-command-error-handling-automatically-abort-on-non-zero-exi/48877892#48877892
     ~\.cargo\bin\cargo test
     if ($LASTEXITCODE) { Throw }
   publish_script: |
