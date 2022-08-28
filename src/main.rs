@@ -295,12 +295,13 @@ async fn process_feed(
         let link = attrs
             .get("href")
             .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
-        let description = extract_description(config, &item)?;
+        let title_text = title.text_contents();
+        let description = extract_description(config, &item, &title_text)?;
         let date = extract_pub_date(config, &item)?;
         let guid = GuidBuilder::default().value(link).permalink(false).build();
 
         let rss_item = ItemBuilder::default()
-            .title(title.text_contents())
+            .title(title_text)
             .link(base_url.parse(link).ok().map(|u| u.to_string()))
             .guid(Some(guid))
             .pub_date(date.map(|date| date.to_rfc2822()))
@@ -409,23 +410,31 @@ fn trim_date(s: &str) -> &str {
 fn extract_description(
     config: &FeedConfig,
     item: &NodeDataRef<ElementData>,
+    title: &str,
 ) -> eyre::Result<Option<String>> {
-    config
-        .summary
-        .as_ref()
-        .map(|selector| {
-            item.as_node()
-                .select_first(selector)
-                .map_err(|()| eyre!("invalid selector for summary: {}", selector))
-                .and_then(|node| {
-                    let mut text = Vec::new();
-                    node.as_node()
-                        .serialize(&mut text)
-                        .wrap_err("unable to serialise description")
-                        .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has to be legit Unicode)
-                })
-        })
-        .transpose()
+    let node = config.summary.as_ref().and_then(|selector| {
+        item.as_node()
+            .select_first(selector)
+            .map_err(|()| {
+                warn!(
+                    "summary selector for item with title '{}' did not match anything",
+                    title.trim()
+                )
+            })
+            .ok()
+    });
+    if node.is_none() {
+        return Ok(None);
+    }
+
+    node.map(|node| {
+        let mut text = Vec::new();
+        node.as_node()
+            .serialize(&mut text)
+            .wrap_err("unable to serialise description")
+            .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has to be legit Unicode)
+    })
+    .transpose()
 }
 
 fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>> {
