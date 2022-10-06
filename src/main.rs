@@ -55,6 +55,7 @@ struct FeedConfig {
     url: String,
     item: String,
     heading: String,
+    link: Option<String>,
     summary: Option<String>,
     date: Option<String>,
 }
@@ -263,6 +264,15 @@ async fn process_feed(
         ));
     }
 
+    if config.link.is_none() {
+        info!(
+            "No explicit link selector provided, falling back to heading selector: {:?}",
+            config.heading
+        );
+    }
+
+    let link_selector = config.link.as_ref().unwrap_or(&config.heading);
+
     // Collect the headers for later
     let headers: Vec<_> = resp
         .headers()
@@ -289,20 +299,27 @@ async fn process_feed(
         let title = item
             .as_node()
             .select_first(&config.heading)
-            .map_err(|()| eyre!("invalid selector for title: {}", config.heading))?;
+            .map_err(|()| eyre!("invalid selector for heading: {}", config.heading))?;
+        let link = item
+            .as_node()
+            .select_first(link_selector)
+            .map_err(|()| eyre!("invalid selector for link: {}", link_selector))?;
         // TODO: Need to make links absolute (probably ones in content too)
-        let attrs = title.attributes.borrow();
-        let link = attrs
+        let attrs = link.attributes.borrow();
+        let link_url = attrs
             .get("href")
             .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
         let title_text = title.text_contents();
         let description = extract_description(config, &item, &title_text)?;
         let date = extract_pub_date(config, &item)?;
-        let guid = GuidBuilder::default().value(link).permalink(false).build();
+        let guid = GuidBuilder::default()
+            .value(link_url)
+            .permalink(false)
+            .build();
 
         let rss_item = ItemBuilder::default()
             .title(title_text)
-            .link(base_url.parse(link).ok().map(|u| u.to_string()))
+            .link(base_url.parse(link_url).ok().map(|u| u.to_string()))
             .guid(Some(guid))
             .pub_date(date.map(|date| date.to_rfc2822()))
             .description(description)
