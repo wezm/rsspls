@@ -182,7 +182,7 @@ async fn process(
     }?;
     let cached_headers = deserialise_cached_headers(&cache_path);
 
-    process_feed(&client, &feed, &cached_headers)
+    process_feed(client, feed, &cached_headers)
         .await
         .and_then(|ref process_result| {
             match process_result {
@@ -402,7 +402,7 @@ fn parse_date(node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> 
         .flatten()
         .and_then(|datetime| {
             debug!("trying datetime attribute");
-            anydate::parse(trim_date(&datetime)).ok()
+            anydate::parse(trim_date(datetime)).ok()
         })
         .map(|x| {
             debug!("using datetime attribute");
