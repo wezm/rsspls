@@ -75,13 +75,13 @@ task:
     if [ -n "$tag" ]; then
       cargo build --release --locked
       cargo build --release --locked --target x86_64-apple-darwin
-      mv target/release/git-grab target/release/git-grab.$CIRRUS_ARCH
-      lipo target/release/git-grab.$CIRRUS_ARCH target/x86_64-apple-darwin/release/git-grab -create -output target/release/git-grab
-      lipo -info target/release/git-grab
-      tarball="git-grab-${tag}-universal-apple-darwin.tar.gz"
-      strip target/release/git-grab
-      tar zcf "$tarball" -C target/release git-grab
-      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
+      mv target/release/rsspls target/release/rsspls.$CIRRUS_ARCH
+      lipo target/release/rsspls.$CIRRUS_ARCH target/x86_64-apple-darwin/release/rsspls -create -output target/release/rsspls
+      lipo -info target/release/rsspls
+      tarball="rsspls-${tag}-universal-apple-darwin.tar.gz"
+      strip target/release/rsspls
+      tar zcf "$tarball" -C target/release rsspls
+      upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
     fi
 
 task:
