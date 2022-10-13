@@ -128,9 +128,13 @@ filename = "wezm.rss"
 url = "https://www.wezm.net/"
 # A CSS selector to select elements on the page that represent items in the feed.
 item = "article"
-# A CSS selector relative to `item` to an element that will supply the title and link for the item.
+# A CSS selector relative to `item` to an element that will supply the title for the item.
+heading = "h3"
+# A CSS selector relative to `item` to an element that will supply the link for the item.
 # Note: This element must have a `href` attribute.
-heading = "h3 a"
+# Note: If not supplied rsspls will attempt to use the heading selector for link for backwards
+#       compatibility with earlier versions. A message will be emitted in this case.
+link = "h3 a"
 # Optional CSS selector relative to `item` that will supply the content of the RSS item.
 summary = ".post-body"
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
