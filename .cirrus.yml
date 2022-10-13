@@ -17,7 +17,7 @@ task:
     - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
     - rustup target add x86_64-unknown-linux-musl
     - mkdir ~/bin
-    - curl -L https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
   test_script:
     - cargo test
   publish_script: |
@@ -41,7 +41,7 @@ task:
   install_script:
     - pkg install -y git-lite
     - fetch -o - https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
-    - fetch -o - https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
+    - fetch -o - https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
   test_script:
     - cargo test
   publish_script: |
@@ -56,24 +56,32 @@ task:
 
 task:
   name: Build (Mac OS)
-  osx_instance:
-    image: catalina-base
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-base:latest
+  env:
+    PATH: "$HOME/.cargo/bin:$HOME/bin:$PATH"
   cargo_cache:
     folder: $HOME/.cargo/registry
     fingerprint_script: cat Cargo.lock
   install_script:
     - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
-    - curl -L https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-apple-darwin.tar.gz | tar xzf - -C /usr/local/bin
+    - mkdir ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-universal-apple-darwin.tar.gz | tar xzf - -C ~/bin
+    - rustup target add x86_64-apple-darwin
   test_script:
     - cargo test
   publish_script: |
     tag=$(git describe --exact-match HEAD 2>/dev/null || true)
     if [ -n "$tag" ]; then
       cargo build --release --locked
-      tarball="rsspls-${tag}-x86_64-apple-darwin.tar.gz"
-      strip target/release/rsspls
-      tar zcf "$tarball" -C target/release rsspls
-      upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
+      cargo build --release --locked --target x86_64-apple-darwin
+      mv target/release/git-grab target/release/git-grab.$CIRRUS_ARCH
+      lipo target/release/git-grab.$CIRRUS_ARCH target/x86_64-apple-darwin/release/git-grab -create -output target/release/git-grab
+      lipo -info target/release/git-grab
+      tarball="git-grab-${tag}-universal-apple-darwin.tar.gz"
+      strip target/release/git-grab
+      tar zcf "$tarball" -C target/release git-grab
+      upload-to-s3 -b releases.wezm.net "$tarball" "git-grab/$tag/$tarball"
     fi
 
 task:
@@ -89,7 +97,7 @@ task:
   install_script:
     - Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
     - .\rustup-init -y --profile minimal --default-toolchain $env:RUST_VERSION
-    - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.1.10/upload-to-s3-0.1.10-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
+    - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
     - Expand-Archive upload-to-s3.zip -DestinationPath .
     - git fetch --tags
   # PowerShell it truly horrific and lacks a way to exit on external command failure so we have to check after every command
