@@ -9,7 +9,6 @@ mod xdg;
 #[cfg(not(windows))]
 use crate::xdg as dirs;
 
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex};
@@ -26,7 +25,7 @@ use log::{debug, error, info, warn};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, RequestBuilder, StatusCode, Url};
 use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use simple_eyre::eyre;
 
 use crate::dirs::Dirs;
@@ -58,6 +57,22 @@ struct FeedConfig {
     link: Option<String>,
     summary: Option<String>,
     date: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct RequestCacheWrite<'a> {
+    headers: Vec<(&'a str, &'a str)>,
+    version: &'a str,
+}
+
+#[derive(Debug, Deserialize)]
+struct RequestCacheRead {
+    headers: Vec<(String, String)>,
+    /// The version of rsspls that created this request cache
+    ///
+    /// May be missing if the cache was created by an older version.
+    #[serde(default)]
+    version: Option<String>,
 }
 
 const RSSPLS_LOG: &str = "RSSPLS_LOG";
@@ -195,6 +210,7 @@ async fn process(
 
                     // Update the cache
                     if let Some(headers) = headers {
+                        debug!("write cache {}", cache_path.display());
                         fs::write(cache_path, headers).wrap_err("unable to write to cache")?;
                     }
 
@@ -266,7 +282,7 @@ async fn process_feed(
 
     if config.link.is_none() {
         info!(
-            "No explicit link selector provided, falling back to heading selector: {:?}",
+            "no explicit link selector provided, falling back to heading selector: {:?}",
             config.heading
         );
     }
@@ -279,7 +295,10 @@ async fn process_feed(
         .iter()
         .filter_map(|(name, value)| value.to_str().ok().map(|val| (name.as_str(), val)))
         .collect();
-    let map: HashMap<_, _> = [("headers", headers)].into_iter().collect();
+    let map = RequestCacheWrite {
+        headers,
+        version: version(),
+    };
     let serialised_headers = toml::to_string(&map)
         .map_err(|err| warn!("unable to serialise headers: {}", err))
         .ok();
@@ -456,10 +475,22 @@ fn extract_description(
 
 fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>> {
     let raw = fs::read(path).ok()?;
-    let mut map: HashMap<String, Vec<(String, String)>> = toml::from_slice(&raw).ok()?;
-    let pairs = map.remove("headers")?;
+    let cache: RequestCacheRead = toml::from_slice(&raw).ok()?;
+
+    if cache.version.as_deref() != Some(version()) {
+        debug!(
+            "cache version ({:?}) != to this version ({:?}), ignoring cache at: {}",
+            cache.version,
+            version(),
+            path.display()
+        );
+        return None;
+    }
+
+    debug!("using cache at: {}", path.display());
     Some(
-        pairs
+        cache
+            .headers
             .into_iter()
             .filter_map(|(name, value)| {
                 HeaderName::try_from(name)
@@ -471,11 +502,11 @@ fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>> {
 }
 
 pub fn version_string() -> String {
-    format!(
-        "{} version {}",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION")
-    )
+    format!("{} version {}", env!("CARGO_PKG_NAME"), version())
+}
+
+fn version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
 }
 
 #[cfg(test)]
