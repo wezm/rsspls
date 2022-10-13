@@ -308,7 +308,7 @@ async fn process_feed(
         let attrs = link.attributes.borrow();
         let link_url = attrs
             .get("href")
-            .ok_or_else(|| eyre!("element selected as heading has no 'href' attribute"))?;
+            .ok_or_else(|| eyre!("element selected as link has no 'href' attribute"))?;
         let title_text = title.text_contents();
         let description = extract_description(config, &item, &title_text)?;
         let date = extract_pub_date(config, &item)?;
