@@ -21,19 +21,19 @@ categories = ["command-line-utilities", "web-programming"]
 [dependencies]
 anydate = "0.3.0"
 atomicwrites = "0.3.1"
-chrono = { version = "0.4.19", default-features = false }
-futures = { version = "0.3.21", default-features = false, features = ["std"] }
+chrono = { version = "0.4.23", default-features = false }
+futures = { version = "0.3.25", default-features = false, features = ["std"] }
 kuchiki = "0.8.1"
 log = "0.4.17"
 pico-args = "0.5.0"
 pretty_env_logger = "0.4.0"
-reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "gzip"] }
-rss = "2.0.1"
-serde = { version = "1.0.138", features = ["derive"] }
+reqwest = { version = "0.11.13", default-features = false, features = ["rustls-tls", "gzip"] }
+rss = "2.0.2"
+serde = { version = "1.0.152", features = ["derive"] }
 simple-eyre = "0.3.1"
-tokio = { version = "1.19.2", features = ["rt-multi-thread", "macros"] }
-toml = "0.5.9"
-url = "2.2.2"
+tokio = { version = "1.24.2", features = ["rt-multi-thread", "macros"] }
+toml = "0.5.10"
+url = "2.3.1"
 
 [target.'cfg(windows)'.dependencies]
 dirs = "4.0.0"
