@@ -1,4 +1,5 @@
 mod cli;
+mod config;
 
 #[cfg(windows)]
 mod dirs;
@@ -15,6 +16,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, fs, mem};
 
+use crate::config::{ChannelConfig, Config, FeedConfig};
 use atomicwrites::AtomicFile;
 use chrono::{DateTime, FixedOffset};
 use eyre::{eyre, Report, WrapErr};
@@ -29,35 +31,6 @@ use serde::{Deserialize, Serialize};
 use simple_eyre::eyre;
 
 use crate::dirs::Dirs;
-
-#[derive(Debug, Deserialize)]
-struct Config {
-    rsspls: RssplsConfig,
-    feed: Vec<ChannelConfig>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RssplsConfig {
-    output: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChannelConfig {
-    title: String,
-    filename: String,
-    config: FeedConfig,
-}
-
-// TODO: Rename?
-#[derive(Debug, Deserialize)]
-struct FeedConfig {
-    url: String,
-    item: String,
-    heading: String,
-    link: Option<String>,
-    summary: Option<String>,
-    date: Option<String>,
-}
 
 #[derive(Debug, Serialize)]
 struct RequestCacheWrite<'a> {
@@ -104,24 +77,7 @@ async fn try_main() -> eyre::Result<bool> {
         None => return Ok(true),
     };
 
-    // Determine the config file path and read it
-    let dirs = dirs::new()?;
-    let config_path = cli.config_path.ok_or(()).or_else(|()| {
-        dirs.place_config_file("feeds.toml")
-            .wrap_err("unable to create path to config file")
-    })?;
-    let raw_config = fs::read(&config_path).wrap_err_with(|| {
-        format!(
-            "unable to read configuration file: {}",
-            config_path.display()
-        )
-    })?;
-    let config: Config = toml::from_slice(&raw_config).wrap_err_with(|| {
-        format!(
-            "unable to parse configuration file: {}",
-            config_path.display()
-        )
-    })?;
+    let config = Config::read(cli.config_path)?;
 
     // Ensure output directory exists
     let output_dir = cli.output_path.or_else(|| config.rsspls.output.map(|ref path| PathBuf::from(path)))
@@ -147,6 +103,7 @@ async fn try_main() -> eyre::Result<bool> {
 
     // Wrap up xdg::BaseDirectories for sharing between tasks. Mutex is used so that only one
     // thread at a time will attempt to create cache directories.
+    let dirs = dirs::new()?;
     let dirs = Arc::new(Mutex::new(dirs));
 
     // Spawn the tasks
