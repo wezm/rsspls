@@ -1,8 +1,10 @@
+use std::fs;
+use std::path::PathBuf;
+
+use chrono::{DateTime, FixedOffset};
 use eyre::WrapErr;
 use serde::Deserialize;
 use simple_eyre::eyre;
-use std::fs;
-use std::path::PathBuf;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -30,7 +32,20 @@ pub struct FeedConfig {
     pub heading: String,
     pub link: Option<String>,
     pub summary: Option<String>,
-    pub date: Option<String>,
+    pub date: Option<Date>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum Date {
+    Selector(String),
+    Config(DateConfig),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DateConfig {
+    pub selector: String,
+    pub format: Option<String>,
 }
 
 impl Config {
@@ -53,5 +68,18 @@ impl Config {
                 config_path.display()
             )
         })
+    }
+}
+
+impl Date {
+    pub fn selector(&self) -> &str {
+        match self {
+            Date::Selector(selector) => selector,
+            Date::Config(DateConfig { selector, .. }) => selector,
+        }
+    }
+
+    pub fn parse(&self, date: &str) -> eyre::Result<DateTime<FixedOffset>> {
+        anydate::parse(date).map_err(eyre::Report::from)
     }
 }

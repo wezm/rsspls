@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, fs, mem};
 
-use crate::config::{ChannelConfig, Config, FeedConfig};
+use crate::config::{ChannelConfig, Config, Date, FeedConfig};
 use atomicwrites::AtomicFile;
 use chrono::{DateTime, FixedOffset};
 use eyre::{eyre, Report, WrapErr};
@@ -361,35 +361,35 @@ fn extract_pub_date(
     config
         .date
         .as_ref()
-        .map(|selector| {
+        .map(|date| {
             item.as_node()
-                .select_first(selector)
-                .map_err(|()| eyre!("invalid selector for date: {}", selector))
-                .map(|node| parse_date(&node))
+                .select_first(date.selector())
+                .map_err(|()| eyre!("invalid selector for date: {}", date.selector()))
+                .map(|node| parse_date(date, &node))
         })
         .transpose()
         .map(Option::flatten)
 }
 
-fn parse_date(node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> {
+fn parse_date(date: &Date, node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> {
     let attrs = node.attributes.borrow();
     (&node.name.local == "time")
         .then(|| attrs.get("datetime"))
         .flatten()
         .and_then(|datetime| {
             debug!("trying datetime attribute");
-            anydate::parse(trim_date(datetime)).ok()
+            date.parse(trim_date(datetime)).ok()
         })
         .map(|x| {
             debug!("using datetime attribute");
             x
         })
         .or_else(|| {
-            let date = node.text_contents();
-            let date = trim_date(&date);
-            anydate::parse(date)
+            let text = node.text_contents();
+            let text = trim_date(&text);
+            date.parse(text)
                 .map_err(|_err| {
-                    warn!("unable to parse date '{}'", date);
+                    warn!("unable to parse date '{}'", text);
                 })
                 .ok()
         })
