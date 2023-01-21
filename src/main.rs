@@ -16,9 +16,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, fs, mem};
 
-use crate::config::{ChannelConfig, Config, Date, FeedConfig};
 use atomicwrites::AtomicFile;
-use chrono::{DateTime, FixedOffset};
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
@@ -29,7 +27,10 @@ use reqwest::{Client, RequestBuilder, StatusCode, Url};
 use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::{Deserialize, Serialize};
 use simple_eyre::eyre;
+use time::format_description::well_known::Rfc2822;
+use time::OffsetDateTime;
 
+use crate::config::{ChannelConfig, Config, DateConfig, FeedConfig};
 use crate::dirs::Dirs;
 
 #[derive(Debug, Serialize)]
@@ -297,7 +298,7 @@ async fn process_feed(
             .title(title_text)
             .link(base_url.parse(link_url).ok().map(|u| u.to_string()))
             .guid(Some(guid))
-            .pub_date(date.map(|date| date.to_rfc2822()))
+            .pub_date(date.map(|date| date.format(&Rfc2822).unwrap()))
             .description(description)
             .build();
         items.push(rss_item);
@@ -357,7 +358,7 @@ fn maybe_add_cache_headers(
 fn extract_pub_date(
     config: &FeedConfig,
     item: &NodeDataRef<ElementData>,
-) -> eyre::Result<Option<DateTime<FixedOffset>>> {
+) -> eyre::Result<Option<OffsetDateTime>> {
     config
         .date
         .as_ref()
@@ -371,7 +372,7 @@ fn extract_pub_date(
         .map(Option::flatten)
 }
 
-fn parse_date(date: &Date, node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> {
+fn parse_date(date: &DateConfig, node: &NodeDataRef<ElementData>) -> Option<OffsetDateTime> {
     let attrs = node.attributes.borrow();
     (&node.name.local == "time")
         .then(|| attrs.get("datetime"))
@@ -478,13 +479,6 @@ mod tests {
             "2022-04-20T06:38:27+10:00"
         );
     }
-
-    // #[test]
-    // fn test_anydate() {
-    //     assert!(anydate::parse("Friday, January 8th, 2021").is_ok()); // fail
-    //     assert!(anydate::parse("Friday, January 8, 2021").is_ok()); // fail
-    //     assert!(anydate::parse("January 8, 2021").is_ok()); // ok
-    // }
 
     #[test]
     fn test_rewrite_urls() {

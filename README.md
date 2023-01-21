@@ -139,6 +139,15 @@ link = "h3 a"
 summary = ".post-body"
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
 date = "time"
+# Alternatively for more control `date` can be specified as a table:
+# [feed.config.date]
+# selector = "time"
+# # Optional type of value being parsed.
+# # Defaults to Date, can also be DateTime if you're parsing a value with a time.
+# type = "Date" 
+# # format of the date to parse. See the following for the syntax
+# # https://time-rs.github.io/book/api/format-description.html
+# format = "[day padding:none]/[month padding:none]/[year]" # will parse 1/2/1934 style dates
 
 # A second example feed
 [[feed]]
@@ -186,6 +195,25 @@ The first example above (for my blog WezM.net) matches HTML that looks like this
   <a href="https://www.wezm.net/v2/posts/">View more posts →</a>
 </section>
 ```
+
+#### More Detail on Date Handling
+
+The `date` key in the configuration can be a string or a table. If it's a
+string then it's used as selector to find the element containing the date and
+`rsspls` will attempt to automatically parse the value. If automatic parsing
+fails you can manually specify the format using the table form of `date`:
+
+```toml
+[feed.config.date]
+selector = "time" # required
+type = "Date"
+format = "[day padding:none]/[month padding:none]/[year]"
+```
+
+* `type` is `Date` when you want to parse just a date. Use `DateTime` if you're
+  parsing a date and time with the format.
+* `format` is a format description using the syntax described on this page:
+  <https://time-rs.github.io/book/api/format-description.html>.
 
 ### Hosting
 
