@@ -1,4 +1,5 @@
 mod cli;
+mod config;
 
 #[cfg(windows)]
 mod dirs;
@@ -16,7 +17,6 @@ use std::time::Duration;
 use std::{env, fs, mem};
 
 use atomicwrites::AtomicFile;
-use chrono::{DateTime, FixedOffset};
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
@@ -27,37 +27,11 @@ use reqwest::{Client, RequestBuilder, StatusCode, Url};
 use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
 use serde::{Deserialize, Serialize};
 use simple_eyre::eyre;
+use time::format_description::well_known::Rfc2822;
+use time::OffsetDateTime;
 
+use crate::config::{ChannelConfig, Config, DateConfig, FeedConfig};
 use crate::dirs::Dirs;
-
-#[derive(Debug, Deserialize)]
-struct Config {
-    rsspls: RssplsConfig,
-    feed: Vec<ChannelConfig>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RssplsConfig {
-    output: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChannelConfig {
-    title: String,
-    filename: String,
-    config: FeedConfig,
-}
-
-// TODO: Rename?
-#[derive(Debug, Deserialize)]
-struct FeedConfig {
-    url: String,
-    item: String,
-    heading: String,
-    link: Option<String>,
-    summary: Option<String>,
-    date: Option<String>,
-}
 
 #[derive(Debug, Serialize)]
 struct RequestCacheWrite<'a> {
@@ -104,24 +78,7 @@ async fn try_main() -> eyre::Result<bool> {
         None => return Ok(true),
     };
 
-    // Determine the config file path and read it
-    let dirs = dirs::new()?;
-    let config_path = cli.config_path.ok_or(()).or_else(|()| {
-        dirs.place_config_file("feeds.toml")
-            .wrap_err("unable to create path to config file")
-    })?;
-    let raw_config = fs::read(&config_path).wrap_err_with(|| {
-        format!(
-            "unable to read configuration file: {}",
-            config_path.display()
-        )
-    })?;
-    let config: Config = toml::from_slice(&raw_config).wrap_err_with(|| {
-        format!(
-            "unable to parse configuration file: {}",
-            config_path.display()
-        )
-    })?;
+    let config = Config::read(cli.config_path)?;
 
     // Ensure output directory exists
     let output_dir = cli.output_path.or_else(|| config.rsspls.output.map(|ref path| PathBuf::from(path)))
@@ -147,6 +104,7 @@ async fn try_main() -> eyre::Result<bool> {
 
     // Wrap up xdg::BaseDirectories for sharing between tasks. Mutex is used so that only one
     // thread at a time will attempt to create cache directories.
+    let dirs = dirs::new()?;
     let dirs = Arc::new(Mutex::new(dirs));
 
     // Spawn the tasks
@@ -340,7 +298,7 @@ async fn process_feed(
             .title(title_text)
             .link(base_url.parse(link_url).ok().map(|u| u.to_string()))
             .guid(Some(guid))
-            .pub_date(date.map(|date| date.to_rfc2822()))
+            .pub_date(date.map(|date| date.format(&Rfc2822).unwrap()))
             .description(description)
             .build();
         items.push(rss_item);
@@ -400,39 +358,39 @@ fn maybe_add_cache_headers(
 fn extract_pub_date(
     config: &FeedConfig,
     item: &NodeDataRef<ElementData>,
-) -> eyre::Result<Option<DateTime<FixedOffset>>> {
+) -> eyre::Result<Option<OffsetDateTime>> {
     config
         .date
         .as_ref()
-        .map(|selector| {
+        .map(|date| {
             item.as_node()
-                .select_first(selector)
-                .map_err(|()| eyre!("invalid selector for date: {}", selector))
-                .map(|node| parse_date(&node))
+                .select_first(date.selector())
+                .map_err(|()| eyre!("invalid selector for date: {}", date.selector()))
+                .map(|node| parse_date(date, &node))
         })
         .transpose()
         .map(Option::flatten)
 }
 
-fn parse_date(node: &NodeDataRef<ElementData>) -> Option<DateTime<FixedOffset>> {
+fn parse_date(date: &DateConfig, node: &NodeDataRef<ElementData>) -> Option<OffsetDateTime> {
     let attrs = node.attributes.borrow();
     (&node.name.local == "time")
         .then(|| attrs.get("datetime"))
         .flatten()
         .and_then(|datetime| {
             debug!("trying datetime attribute");
-            anydate::parse(trim_date(datetime)).ok()
+            date.parse(trim_date(datetime)).ok()
         })
         .map(|x| {
             debug!("using datetime attribute");
             x
         })
         .or_else(|| {
-            let date = node.text_contents();
-            let date = trim_date(&date);
-            anydate::parse(date)
+            let text = node.text_contents();
+            let text = trim_date(&text);
+            date.parse(text)
                 .map_err(|_err| {
-                    warn!("unable to parse date '{}'", date);
+                    warn!("unable to parse date '{}'", text);
                 })
                 .ok()
         })
@@ -521,13 +479,6 @@ mod tests {
             "2022-04-20T06:38:27+10:00"
         );
     }
-
-    // #[test]
-    // fn test_anydate() {
-    //     assert!(anydate::parse("Friday, January 8th, 2021").is_ok()); // fail
-    //     assert!(anydate::parse("Friday, January 8, 2021").is_ok()); // fail
-    //     assert!(anydate::parse("January 8, 2021").is_ok()); // ok
-    // }
 
     #[test]
     fn test_rewrite_urls() {

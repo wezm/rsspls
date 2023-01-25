@@ -1217,6 +1217,7 @@ dependencies = [
  "rss",
  "serde",
  "simple-eyre",
+ "time",
  "tokio",
  "toml",
  "url",
@@ -1508,6 +1509,30 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "time"
+version = "0.3.17"
+source = "git+https://github.com/time-rs/time.git?rev=43862d294546177a331038ff49adf80d87507622#43862d294546177a331038ff49adf80d87507622"
+dependencies = [
+ "itoa 1.0.5",
+ "serde",
+ "time-core",
+ "time-macros",
+]
+
+[[package]]
+name = "time-core"
+version = "0.1.0"
+source = "git+https://github.com/time-rs/time.git?rev=43862d294546177a331038ff49adf80d87507622#43862d294546177a331038ff49adf80d87507622"
+
+[[package]]
+name = "time-macros"
+version = "0.2.6"
+source = "git+https://github.com/time-rs/time.git?rev=43862d294546177a331038ff49adf80d87507622#43862d294546177a331038ff49adf80d87507622"
+dependencies = [
+ "time-core",
 ]
 
 [[package]]
