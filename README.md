@@ -143,7 +143,7 @@ date = "time"
 # [feed.config.date]
 # selector = "time"
 # # Optional type of value being parsed.
-# # Defaults to Date, can also be DateTime if you're parsing a value with a time.
+# # Defaults to DateTime, can also be Date if you're parsing a value without a time.
 # type = "Date" 
 # # format of the date to parse. See the following for the syntax
 # # https://time-rs.github.io/book/api/format-description.html
@@ -211,7 +211,7 @@ format = "[day padding:none]/[month padding:none]/[year]"
 ```
 
 * `type` is `Date` when you want to parse just a date. Use `DateTime` if you're
-  parsing a date and time with the format.
+  parsing a date and time with the format. Defaults to `DateTime`.
 * `format` is a format description using the syntax described on this page:
   <https://time-rs.github.io/book/api/format-description.html>.
 
