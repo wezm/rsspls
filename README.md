@@ -215,6 +215,12 @@ format = "[day padding:none]/[month padding:none]/[year]"
 * `format` is a format description using the syntax described on this page:
   <https://time-rs.github.io/book/api/format-description.html>.
 
+If the element matched by the `date` selector is a `<time>` element then
+`rsspls` will first try to parse the value in the `datetime` attribute if
+present. If the attribute is missing or the element is not a `time` element
+then `rsspls` will use the supplied format or attempt automatic parsing of the
+text content of the element.
+
 ### Hosting
 
 It is expected that `rsspls` will be run on a web server that is serving the
