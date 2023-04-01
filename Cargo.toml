@@ -20,29 +20,27 @@ categories = ["command-line-utilities", "web-programming"]
 
 [dependencies]
 anydate = "0.3.0"
-atomicwrites = "0.3.1"
-chrono = { version = "0.4.23", default-features = false }
-futures = { version = "0.3.25", default-features = false, features = ["std"] }
+atomicwrites = "0.4.0"
+chrono = { version = "0.4.24", default-features = false }
+futures = { version = "0.3.28", default-features = false, features = ["std"] }
 kuchiki = "0.8.1"
 log = "0.4.17"
 pico-args = "0.5.0"
 pretty_env_logger = "0.4.0"
-reqwest = { version = "0.11.13", default-features = false, features = ["rustls-tls", "gzip"] }
-rss = "2.0.2"
-serde = { version = "1.0.152", features = ["derive"] }
+reqwest = { version = "0.11.16", default-features = false, features = ["rustls-tls", "gzip"] }
+rss = "2.0.3"
+serde = { version = "1.0.159", features = ["derive"] }
 simple-eyre = "0.3.1"
-tokio = { version = "1.24.2", features = ["rt-multi-thread", "macros"] }
-toml = "0.5.10"
+tokio = { version = "1.27.0", features = ["rt-multi-thread", "macros"] }
+basic-toml = "0.1.2"
 url = "2.3.1"
 
 [dependencies.time]
-#version = "0.3.17"
-git = "https://github.com/time-rs/time.git"
-rev = "43862d294546177a331038ff49adf80d87507622"
+version = "0.3.20"
 features = ["parsing", "formatting", "macros"]
 
 [target.'cfg(windows)'.dependencies]
-dirs = "4.0.0"
+dirs = "5.0.0"
 
 [target.'cfg(not(windows))'.dependencies]
 xdg = "2.4.1"

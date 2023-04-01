@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::{fmt, fs};
 
+use basic_toml as toml;
 use eyre::WrapErr;
 use log::{debug, warn};
 use serde::{de, Deserialize, Deserializer};
@@ -151,7 +152,7 @@ where
     D: Deserializer<'de>,
 {
     let s: Option<String> = Option::deserialize(deserializer)?;
-    s.map(|s| time::format_description::parse_owned(&s))
+    s.map(|s| time::format_description::parse_owned::<2>(&s))
         .transpose()
         .map_err(|err| {
             warn!("unable to parse date format: {}", err);
@@ -249,7 +250,7 @@ mod tests {
         DateConfig {
             selector: String::new(),
             type_: DateType::Date,
-            format: Some(time::format_description::parse_owned(format).unwrap()),
+            format: Some(time::format_description::parse_owned::<2>(format).unwrap()),
         }
     }
 

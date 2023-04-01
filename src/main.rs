@@ -17,6 +17,7 @@ use std::time::Duration;
 use std::{env, fs, mem};
 
 use atomicwrites::AtomicFile;
+use basic_toml as toml;
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use kuchiki::traits::TendrilSink;
