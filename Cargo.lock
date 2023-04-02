@@ -1303,7 +1303,7 @@ dependencies = [
 
 [[package]]
 name = "rsspls"
-version = "0.5.0"
+version = "0.6.1"
 dependencies = [
  "anydate",
  "atomicwrites",
