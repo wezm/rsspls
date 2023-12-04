@@ -1,13 +1,13 @@
 env:
   PATH: "$HOME/.cargo/bin:$PATH"
-  RUST_VERSION: '1.63.0'
+  RUST_VERSION: '1.70.0'
   AWS_ACCESS_KEY_ID: ENCRYPTED[d195e8c503f9711bb02e1cf5c64a90cdd63cdbaec7618e57ec7efb0194acf251db6b3056bf17437703025410dab0ef5a]
   AWS_SECRET_ACCESS_KEY: ENCRYPTED[0930789e1bd5f1277a5e01f43750cc6de7e2be51ee6d26a60e34b3f47b6b124c54fab9cbcb498f8f26b0f5df48b622c6]
 
 task:
   name: Build (Debian Linux)
   container:
-    image: debian:11-slim
+    image: debian:12-slim
     cpu: 4
   cargo_cache:
     folder: $HOME/.cargo/registry
@@ -33,7 +33,7 @@ task:
 task:
   name: Build (FreeBSD)
   freebsd_instance:
-    image_family: freebsd-13-1
+    image_family: freebsd-13-2
     cpu: 4
   cargo_cache:
     folder: $HOME/.cargo/registry
