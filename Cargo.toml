@@ -19,7 +19,7 @@ categories = ["command-line-utilities", "web-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anydate = "0.3.0"
+anydate = "0.4.0"
 atomicwrites = "0.4.0"
 chrono = { version = "0.4.24", default-features = false }
 futures = { version = "0.3.28", default-features = false, features = ["std"] }

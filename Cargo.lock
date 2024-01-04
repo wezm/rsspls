@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anydate"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c3a1c55494ca9293aeabfcfbd5d2142f4b98e1bd402cc1f44c66cbfa2c21db5"
+checksum = "ab5a92998480462b6ae88d54b3d720a6b43427a45443f42dd191a184dd4dbca3"
 dependencies = [
  "chrono",
  "thiserror",
