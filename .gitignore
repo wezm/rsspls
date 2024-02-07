@@ -1,2 +1,5 @@
 /target
 /TODO.md
+*.rss
+.vscode
+feeds.toml

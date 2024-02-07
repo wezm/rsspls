@@ -23,9 +23,10 @@ use futures::future;
 use kuchiki::traits::TendrilSink;
 use kuchiki::{ElementData, NodeDataRef, NodeRef};
 use log::{debug, error, info, warn};
+use mime_guess::mime;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, RequestBuilder, StatusCode, Url};
-use rss::{Channel, ChannelBuilder, GuidBuilder, ItemBuilder};
+use rss::{Channel, ChannelBuilder, EnclosureBuilder, GuidBuilder, ItemBuilder};
 use serde::{Deserialize, Serialize};
 use simple_eyre::eyre;
 use time::format_description::well_known::Rfc2822;
@@ -299,13 +300,51 @@ async fn process_feed(
             .permalink(false)
             .build();
 
-        let rss_item = ItemBuilder::default()
+        let mut rss_item_builder = ItemBuilder::default();
+        rss_item_builder
             .title(title_text)
             .link(base_url.parse(link_url).ok().map(|u| u.to_string()))
             .guid(Some(guid))
             .pub_date(date.map(|date| date.format(&Rfc2822).unwrap()))
-            .description(description)
-            .build();
+            .description(description);
+
+        // Media enclosure
+        if let Some(media_selector) = &config.media {
+            let media = item
+                .as_node()
+                .select_first(&media_selector)
+                .map_err(|()| eyre!("invalid selector for media: {}", media_selector))?;
+
+            let media_attrs = media.attributes.borrow();
+            let media_url = media_attrs
+                .get("src")
+                .or_else(|| media_attrs.get("href"))
+                .ok_or_else(|| {
+                    eyre!("element selected as media has no 'src' or 'href' attribute")
+                })?;
+
+            let parsed_url = base_url
+                .parse(media_url)
+                .map_err(|e| eyre!("media enclosure url invalid: {e}"))?;
+
+            // Guessing the MIME type from the url as we don't have the full media
+            let media_mime_type = parsed_url
+                .path_segments()
+                .and_then(|segments| segments.last())
+                .map(|media_filename| mime_guess::from_path(media_filename).first_or_octet_stream())
+                .unwrap_or_else(|| mime::APPLICATION_OCTET_STREAM);
+
+            let mut enclosure_bld = EnclosureBuilder::default();
+            enclosure_bld.url(parsed_url.to_string());
+            enclosure_bld.mime_type(media_mime_type.to_string());
+            // "When an enclosure's size cannot be determined, a publisher should use a length of 0."
+            // https://www.rssboard.org/rss-profile#element-channel-item-enclosure
+            enclosure_bld.length("0".to_string());
+
+            rss_item_builder.enclosure(Some(enclosure_bld.build()));
+        }
+
+        let rss_item = rss_item_builder.build();
         items.push(rss_item);
     }
 
