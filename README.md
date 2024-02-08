@@ -38,19 +38,22 @@ reader. This will typically require the feeds to be hosted via a web server.
 Contents
 --------
 
-* [Install](#install)
-  * [Package Manager](#package-manager)
-  * [Pre-compiled Binary](#pre-compiled-binary)
-* [Usage](#usage)
-  * [Configuration](#configuration)
-  * [Hosting](#hosting)
-  * [Caveats](#caveats)
-  * [Caching](#caching)
-* [Build From Source](#build-from-source)
-  * [From Git Checkout or Release Tarball](#from-git-checkout-or-release-tarball)
-  * [From crates.io](#from-cratesio)
-* [Credits](#credits)
-* [Licence](#licence)
+- [Contents](#contents)
+- [Install](#install)
+  - [Package Manager](#package-manager)
+  - [Pre-compiled Binary](#pre-compiled-binary)
+- [Usage](#usage)
+  - [Configuration](#configuration)
+    - [Annotated Sample Configuration](#annotated-sample-configuration)
+    - [More Detail on Date Handling](#more-detail-on-date-handling)
+  - [Hosting](#hosting)
+  - [Caveats](#caveats)
+  - [Caching](#caching)
+- [Build From Source](#build-from-source)
+  - [From Git Checkout or Release Tarball](#from-git-checkout-or-release-tarball)
+  - [From crates.io](#from-cratesio)
+- [Credits](#credits)
+- [Licence](#licence)
 
 Install
 -------
@@ -121,6 +124,9 @@ title = "My Great RSS Feed"
 # The output filename without the output directory to write this feed to.
 # Note: this is a filename only, not a path. It should not contain slashes.
 filename = "wezm.rss"
+# Optional user agent header to be set for the http(s) request.
+# This line can also be removed entirely if not needed.
+user_agent = "Mozilla/5.0"
 
 # The configuration for the feed
 [feed.config]
