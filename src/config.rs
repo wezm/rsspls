@@ -27,6 +27,7 @@ pub struct RssplsConfig {
 pub struct ChannelConfig {
     pub title: String,
     pub filename: String,
+    pub user_agent: Option<String>,
     pub config: FeedConfig,
 }
 
