@@ -124,9 +124,8 @@ title = "My Great RSS Feed"
 # The output filename without the output directory to write this feed to.
 # Note: this is a filename only, not a path. It should not contain slashes.
 filename = "wezm.rss"
-# Optional user agent header to be set for the http(s) request.
-# This line can also be removed entirely if not needed.
-user_agent = "Mozilla/5.0"
+# Optional User-Agent header to be set for the HTTP request.
+# user_agent = "Mozilla/5.0"
 
 # The configuration for the feed
 [feed.config]

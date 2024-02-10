@@ -385,7 +385,7 @@ fn add_headers(
     use reqwest::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED, USER_AGENT};
 
     if let Some(ua) = user_agent {
-        debug!("add user-agent: {:?}", ua);
+        debug!("add User-Agent: {:?}", ua);
         req = req.header(USER_AGENT, ua);
     }
 
