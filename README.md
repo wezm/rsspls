@@ -121,9 +121,11 @@ output = "/tmp"
 [[feed]]
 # The title of the channel in the feed
 title = "My Great RSS Feed"
+
 # The output filename without the output directory to write this feed to.
 # Note: this is a filename only, not a path. It should not contain slashes.
 filename = "wezm.rss"
+
 # Optional User-Agent header to be set for the HTTP request.
 # user_agent = "Mozilla/5.0"
 
@@ -131,22 +133,32 @@ filename = "wezm.rss"
 [feed.config]
 # The URL of the web page to generate the feed from.
 url = "https://www.wezm.net/"
+
 # A CSS selector to select elements on the page that represent items in the feed.
 item = "article"
+
 # A CSS selector relative to `item` to an element that will supply the title for the item.
 heading = "h3"
+
 # A CSS selector relative to `item` to an element that will supply the link for the item.
 # Note: This element must have a `href` attribute.
 # Note: If not supplied rsspls will attempt to use the heading selector for link for backwards
 #       compatibility with earlier versions. A message will be emitted in this case.
 link = "h3 a"
+
 # Optional CSS selector relative to `item` that will supply the content of the RSS item.
 summary = ".post-body"
-# Optional CSS selector relative to `item` that supplies a media (image, video..) content to be added as an RSS enclosure.
-# The media link must be given by the `src` attribute of the selected element.
-media = ".example-img > img"
+
+# Optional CSS selector relative to `item` that supplies media content (audio, video, image)
+# to be added as an RSS enclosure.
+# Note: The media URL must be given by the `src` or `href` attribute of the selected element.
+# Note: Currently all each item must have an element that matches this selector for the feed
+        to be generated.
+# media = "figure img"
+
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
 date = "time"
+
 # Alternatively for more control `date` can be specified as a table:
 # [feed.config.date]
 # selector = "time"
