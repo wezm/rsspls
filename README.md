@@ -143,6 +143,9 @@ heading = "h3"
 link = "h3 a"
 # Optional CSS selector relative to `item` that will supply the content of the RSS item.
 summary = ".post-body"
+# Optional CSS selector relative to `item` that supplies a media (image, video..) content to be added as an RSS enclosure.
+# The media link must be given by the `src` attribute of the selected element.
+media = ".example-img > img"
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
 date = "time"
 # Alternatively for more control `date` can be specified as a table:

@@ -41,6 +41,7 @@ pub struct FeedConfig {
     pub summary: Option<String>,
     #[serde(default, deserialize_with = "opt_string_or_struct")]
     pub date: Option<DateConfig>,
+    pub media: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
