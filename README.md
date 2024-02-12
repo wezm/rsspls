@@ -153,7 +153,7 @@ summary = ".post-body"
 # to be added as an RSS enclosure.
 # Note: The media URL must be given by the `src` or `href` attribute of the selected element.
 # Note: Currently all each item must have an element that matches this selector for the feed
-        to be generated.
+#       to be generated.
 # media = "figure img"
 
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
