@@ -116,6 +116,12 @@ The sample file below demonstrates all the parts of the configuration.
 # Optional output directory to write the feeds to. If not specified it must be supplied via
 # the --output command line option.
 output = "/tmp"
+# Optional proxy address. If specified, all requests will be routed through it.
+# The address needs to be in the format: protocol://ip_address:port
+# The supported protocols are: http, https, socks and socks5h.
+# It can also be specified as environment variable `http_proxy` or `HTTPS_PROXY`.
+# The config file takes precedence, then the env vars in the above order.
+# proxy = socks5://10.64.0.1:1080
 
 # Next is the array of feeds, each one starts with [[feed]]
 [[feed]]

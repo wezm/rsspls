@@ -98,9 +98,29 @@ async fn try_main() -> eyre::Result<bool> {
     // Set up the HTTP client
     let connect_timeout = Duration::from_secs(10);
     let timeout = Duration::from_secs(30);
-    let client = Client::builder()
+    let mut client_builder = Client::builder()
         .connect_timeout(connect_timeout)
-        .timeout(timeout)
+        .timeout(timeout);
+
+    // Add proxy if provided
+    let proxy_opt = config
+        .rsspls
+        .proxy
+        .or(env::var("http_proxy").ok())
+        .or(env::var("HTTPS_PROXY").ok());
+    if let Some(proxy) = proxy_opt {
+        let proxy_protocol = proxy.parse().map(|p: Url| p.scheme().to_string());
+        let r = match proxy_protocol.as_ref().map(String::as_str) {
+            Ok("http") => Ok(client_builder.proxy(reqwest::Proxy::http(proxy)?)),
+            Ok("https") => Ok(client_builder.proxy(reqwest::Proxy::https(proxy)?)),
+            Ok("socks5") | Ok("socksh") => Ok(client_builder.proxy(reqwest::Proxy::all(proxy)?)),
+            Err(e) => Err(eyre!("Invalid Proxy URL: {e}")),
+            _ => Err(eyre!("Unrecognized proxy protocol.")),
+        };
+        client_builder = r?;
+    }
+
+    let client = client_builder
         .build()
         .wrap_err("unable to build HTTP client")?;
 
