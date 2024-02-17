@@ -46,6 +46,7 @@ Contents
   - [Configuration](#configuration)
     - [Annotated Sample Configuration](#annotated-sample-configuration)
     - [More Detail on Date Handling](#more-detail-on-date-handling)
+  - [Dynamic parameter in `feeds.toml`](#dynamic-parameter-in-feedstoml)
   - [Hosting](#hosting)
   - [Caveats](#caveats)
   - [Caching](#caching)
@@ -240,6 +241,15 @@ If the element matched by the `date` selector is a `<time>` element then
 present. If the attribute is missing or the element is not a `time` element
 then `rsspls` will use the supplied format or attempt automatic parsing of the
 text content of the element.
+
+### Dynamic parameter in `feeds.toml`
+
+It is possible to insert strings dynamically into the `feeds.toml` config in order
+to enable using one template config for multiple similar webpages (e.g. different profiles
+of the same website).
+To do so, insert the string "%<example_key>" in the feed `title` string (or any other attribute).
+Running `rsspls --parameter example_key=exvalue` will then replace the "%<example_key>" string with
+"exvalue" and run `rsspls` on the config.
 
 ### Hosting
 

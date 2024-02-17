@@ -3,6 +3,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
+use log::debug;
 use pico_args::Arguments;
 use simple_eyre::eyre;
 
@@ -11,6 +12,7 @@ use crate::version_string;
 pub struct Cli {
     pub config_path: Option<PathBuf>,
     pub output_path: Option<PathBuf>,
+    pub param_kv: Option<(String, String)>,
 }
 
 pub fn parse_args() -> eyre::Result<Option<Cli>> {
@@ -21,9 +23,23 @@ pub fn parse_args() -> eyre::Result<Option<Cli>> {
         return print_usage();
     }
 
+    let param_kv =
+        pargs
+            .opt_value_from_str(["-p", "--parameter"])?
+            .and_then(|param_arg: String| {
+                let parts: Vec<&str> = param_arg.splitn(2, '=').collect();
+                if parts.len() == 2 {
+                    Some((parts[0].to_string(), parts[1].to_string()))
+                } else {
+                    debug!("Could not parse parameter argument, continuing without.");
+                    None
+                }
+            });
+
     Ok(Some(Cli {
         config_path: pargs.opt_value_from_os_str(["-c", "--config"], pathbuf)?,
         output_path: pargs.opt_value_from_os_str(["-o", "--output"], pathbuf)?,
+        param_kv,
     }))
 }
 

@@ -80,7 +80,7 @@ async fn try_main() -> eyre::Result<bool> {
         None => return Ok(true),
     };
 
-    let config = Config::read(cli.config_path)?;
+    let config = Config::read(cli.config_path, cli.param_kv)?;
 
     // Ensure output directory exists
     let output_dir = cli.output_path.or_else(|| config.rsspls.output.map(|ref path| PathBuf::from(path)))

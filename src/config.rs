@@ -67,19 +67,27 @@ impl Default for DateType {
 
 impl Config {
     /// Read the config file path and the supplied path or default if None
-    pub fn read(config_path: Option<PathBuf>) -> eyre::Result<Config> {
+    pub fn read(
+        config_path: Option<PathBuf>,
+        param_kv: Option<(String, String)>,
+    ) -> eyre::Result<Config> {
         let dirs = crate::dirs::new()?;
         let config_path = config_path.ok_or(()).or_else(|()| {
             dirs.place_config_file("feeds.toml")
                 .wrap_err("unable to create path to config file")
         })?;
-        let raw_config = fs::read(&config_path).wrap_err_with(|| {
+        let mut str_config = fs::read_to_string(&config_path).wrap_err_with(|| {
             format!(
                 "unable to read configuration file: {}",
                 config_path.display()
             )
         })?;
-        toml::from_slice(&raw_config).wrap_err_with(|| {
+
+        if let Some(key_value) = param_kv {
+            str_config = str_config.replace(&format!("%<{}>", &key_value.0), &key_value.1);
+        }
+
+        toml::from_str(&str_config).wrap_err_with(|| {
             format!(
                 "unable to parse configuration file: {}",
                 config_path.display()
