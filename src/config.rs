@@ -21,6 +21,7 @@ pub struct Config {
 #[derive(Debug, Deserialize)]
 pub struct RssplsConfig {
     pub output: Option<String>,
+    pub proxy: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
