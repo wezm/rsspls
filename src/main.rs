@@ -103,22 +103,22 @@ async fn try_main() -> eyre::Result<bool> {
         .timeout(timeout);
 
     // Add proxy if provided
-    let proxy_opt = config
-        .rsspls
-        .proxy
-        .or(env::var("http_proxy").ok())
-        .or(env::var("HTTPS_PROXY").ok());
-    if let Some(proxy) = proxy_opt {
-        let proxy_protocol = proxy.parse().map(|p: Url| p.scheme().to_string());
-        let r = match proxy_protocol.as_ref().map(String::as_str) {
-            Ok("http") => Ok(client_builder.proxy(reqwest::Proxy::http(proxy)?)),
-            Ok("https") => Ok(client_builder.proxy(reqwest::Proxy::https(proxy)?)),
-            Ok("socks5") | Ok("socksh") => Ok(client_builder.proxy(reqwest::Proxy::all(proxy)?)),
-            Err(e) => Err(eyre!("Invalid Proxy URL: {e}")),
-            _ => Err(eyre!("Unrecognized proxy protocol.")),
-        };
-        client_builder = r?;
-    }
+    match config.rsspls.proxy {
+        Some(proxy) => {
+            debug!("using proxy from configuration file: {}", proxy);
+            client_builder = client_builder.proxy(reqwest::Proxy::all(proxy)?)
+        }
+        None => {
+            if let Ok(proxy) = env::var("http_proxy") {
+                debug!("using http proxy from 'http_proxy' env var: {}", proxy);
+                client_builder = client_builder.proxy(reqwest::Proxy::http(proxy)?)
+            }
+            if let Ok(proxy) = env::var("HTTPS_PROXY") {
+                debug!("using https proxy from 'HTTPS_PROXY' env var: {}", proxy);
+                client_builder = client_builder.proxy(reqwest::Proxy::https(proxy)?)
+            }
+        }
+    };
 
     let client = client_builder
         .build()
