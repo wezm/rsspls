@@ -33,7 +33,7 @@ task:
 task:
   name: Build (FreeBSD)
   freebsd_instance:
-    image_family: freebsd-13-2
+    image_family: freebsd-13-3
     cpu: 4
   cargo_cache:
     folder: $HOME/.cargo/registry
