@@ -158,8 +158,7 @@ summary = ".post-body"
 # Optional CSS selector relative to `item` that supplies media content (audio, video, image)
 # to be added as an RSS enclosure.
 # Note: The media URL must be given by the `src` or `href` attribute of the selected element.
-# Note: Currently all each item must have an element that matches this selector for the feed
-#       to be generated.
+# Note: Currently if the item does not match the media selector then it will be skipped.
 # media = "figure img"
 
 # Optional CSS selector relative to `item` that supples the publication date of the RSS item.
