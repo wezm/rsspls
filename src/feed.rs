@@ -3,7 +3,7 @@ use std::mem;
 use basic_toml as toml;
 use kuchiki::traits::TendrilSink;
 use kuchiki::{ElementData, NodeDataRef, NodeRef};
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use mime_guess::mime;
 use reqwest::header::HeaderMap;
 use reqwest::{Client, RequestBuilder, StatusCode};
@@ -98,9 +98,15 @@ pub async fn process_feed(
         .select(&config.item)
         .map_err(|()| eyre!("invalid selector for item: {}", config.item))?
     {
-        match parse_item(config, item, link_selector, &base_url) {
+        match process_item(config, item, link_selector, &base_url) {
             Ok(rss_item) => items.push(rss_item),
-            Err(e) => eprintln!("Error parsing RSS item {}: {e}", config.item),
+            Err(err) => {
+                let report = err.wrap_err(format!(
+                    "unable to process RSS item matching '{}'",
+                    config.item
+                ));
+                error!("{report:?}");
+            }
         }
     }
 
@@ -117,7 +123,7 @@ pub async fn process_feed(
     })
 }
 
-fn parse_item(
+fn process_item(
     config: &FeedConfig,
     item: NodeDataRef<ElementData>,
     link_selector: &str,
@@ -154,6 +160,7 @@ fn parse_item(
 
     // Media enclosure
     if let Some(media_selector) = &config.media {
+        debug!("checking for media matching {media_selector}");
         let media = item
             .as_node()
             .select_first(media_selector)
