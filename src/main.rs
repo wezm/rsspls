@@ -357,7 +357,7 @@ fn parse_item(
     if let Some(media_selector) = &config.media {
         let media = item
             .as_node()
-            .select_first(&media_selector)
+            .select_first(media_selector)
             .map_err(|()| eyre!("invalid selector for media: {}", media_selector))?;
 
         let media_attrs = media.attributes.borrow();

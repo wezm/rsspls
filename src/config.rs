@@ -54,16 +54,11 @@ pub struct DateConfig {
     pub format: Option<OwnedFormatItem>,
 }
 
-#[derive(Debug, Deserialize, Copy, Clone)]
+#[derive(Debug, Default, Deserialize, Copy, Clone)]
 enum DateType {
     Date,
+    #[default]
     DateTime,
-}
-
-impl Default for DateType {
-    fn default() -> Self {
-        DateType::DateTime
-    }
 }
 
 impl Config {
