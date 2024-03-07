@@ -68,8 +68,9 @@ Install
 
 `rsspls` is packaged in these package managers:
 
-* [AUR](https://aur.archlinux.org/packages/rsspls)
+* AUR: [rsspls](https://aur.archlinux.org/packages/rsspls)
 * Homebrew: `brew install wezm/taps/rsspls`
+* MacPorts: [rsspls](https://ports.macports.org/port/rsspls/summary/)
 
 ### Pre-compiled Binary
 
