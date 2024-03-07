@@ -39,7 +39,7 @@ task:
     folder: $HOME/.cargo/registry
     fingerprint_script: cat Cargo.lock
   install_script:
-    - pkg install -y git-lite
+    - pkg install -y git-lite ca_root_nss
     - fetch -o - https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
     - fetch -o - https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
   test_script:
