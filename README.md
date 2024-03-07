@@ -77,10 +77,10 @@ Install
 Pre-compiled binaries are available for a number of platforms.
 They require no additional dependencies on your computer.
 
-* [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.7.1/rsspls-0.7.1-amd64-unknown-freebsd.tar.gz)
-* [Linux x86\_64](https://releases.wezm.net/rsspls/0.7.1/rsspls-0.7.1-x86_64-unknown-linux-musl.tar.gz)
-* [MacOS Universal](https://releases.wezm.net/rsspls/0.7.1/rsspls-0.7.1-universal-apple-darwin.tar.gz)
-* [Windows x86\_64](https://releases.wezm.net/rsspls/0.7.1/rsspls-0.7.1-x86_64-pc-windows-msvc.zip)
+* [FreeBSD 13 amd64](https://releases.wezm.net/rsspls/0.8.1/rsspls-0.8.1-amd64-unknown-freebsd.tar.gz)
+* [Linux x86\_64](https://releases.wezm.net/rsspls/0.8.1/rsspls-0.8.1-x86_64-unknown-linux-musl.tar.gz)
+* [MacOS Universal](https://releases.wezm.net/rsspls/0.8.1/rsspls-0.8.1-universal-apple-darwin.tar.gz)
+* [Windows x86\_64](https://releases.wezm.net/rsspls/0.8.1/rsspls-0.8.1-x86_64-pc-windows-msvc.zip)
 
 Example to download and extract a binary:
 
