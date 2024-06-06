@@ -73,6 +73,7 @@ async fn try_main() -> eyre::Result<bool> {
                 output_dir.display()
             )
         })?;
+        info!("created output directory: {}", output_dir.display());
     }
 
     // Set up the HTTP client
