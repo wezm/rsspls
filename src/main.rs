@@ -62,10 +62,24 @@ async fn try_main() -> eyre::Result<bool> {
 
     let config = Config::read(cli.config_path)?;
 
-    // Ensure output directory exists
-    let output_dir = cli.output_path.or_else(|| config.rsspls.output.map(|ref path| PathBuf::from(path)))
-        .ok_or_else(|| eyre!("output directory must be supplied via --output or be present in configuration file"))?;
+    // Determine output directory
+    let output_dir = match cli.output_path {
+        Some(path) => Some(path),
+        None => config
+            .rsspls
+            .output
+            .map(|ref path| {
+                dirs::home_dir()
+                    .ok_or_else(|| eyre!("unable to determine home directory"))
+                    .map(|home| expand_tilde(path, home))
+            })
+            .transpose()?,
+    }
+    .ok_or_else(|| {
+        eyre!("output directory must be supplied via --output or be present in configuration file")
+    })?;
 
+    // Ensure output directory exists
     if !output_dir.exists() {
         fs::create_dir_all(&output_dir).wrap_err_with(|| {
             format!(
@@ -203,4 +217,57 @@ pub fn version_string() -> String {
 
 fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
+}
+
+fn expand_tilde<P: Into<PathBuf>>(path: P, mut home: PathBuf) -> PathBuf {
+    let path = path.into();
+
+    // NOTE: starts_with only considers whole path components
+    if path.starts_with("~") {
+        if path == Path::new("~") {
+            home
+        } else {
+            home.push(path.strip_prefix("~").unwrap());
+            home
+        }
+    } else {
+        path
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(not(windows))]
+    fn test_home() {
+        let expanded = expand_tilde("asdf", PathBuf::from("/home/foo"));
+        assert_eq!(expanded, Path::new("asdf"));
+
+        let expanded = expand_tilde("~asdf", PathBuf::from("/home/foo"));
+        assert_eq!(expanded, Path::new("~asdf"));
+
+        let expanded = expand_tilde("~/some/where", PathBuf::from("/home/foo"));
+        assert_eq!(expanded, Path::new("/home/foo/some/where"));
+
+        let expanded = expand_tilde("~/some/where", PathBuf::from("/"));
+        assert_eq!(expanded, Path::new("/some/where"));
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn test_home_windows() {
+        let expanded = expand_tilde("asdf", PathBuf::from(r"C:\Users\Foo"));
+        assert_eq!(expanded, Path::new("asdf"));
+
+        let expanded = expand_tilde("~asdf", PathBuf::from(r"C:\Users\Foo"));
+        assert_eq!(expanded, Path::new("~asdf"));
+
+        let expanded = expand_tilde(r"~\some\where", PathBuf::from(r"C:\Users\Foo"));
+        assert_eq!(expanded, Path::new(r"C:\Users\Foo\some\where"));
+
+        let expanded = expand_tilde(r"~\some\where", PathBuf::from(r"C:\"));
+        assert_eq!(expanded, Path::new(r"C:\some\where"));
+    }
 }
