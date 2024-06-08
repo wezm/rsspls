@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 pub struct RequestCacheWrite<'a> {
     pub headers: Vec<(&'a str, &'a str)>,
     pub version: &'a str,
+    pub config_hash: &'a str,
 }
 
 #[derive(Debug, Deserialize)]
@@ -20,9 +21,19 @@ struct RequestCacheRead {
     /// May be missing if the cache was created by an older version.
     #[serde(default)]
     version: Option<String>,
+    /// Hash of the config
+    ///
+    /// Used as cache buster when config changes.
+    ///
+    /// May be missing if the cache was created by an older version.
+    #[serde(default)]
+    config_hash: Option<String>,
 }
 
-pub fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>> {
+pub fn deserialise_cached_headers(
+    path: &Path,
+    config_hash: &str,
+) -> Option<HeaderMap<HeaderValue>> {
     let raw = fs::read(path).ok()?;
     let cache: RequestCacheRead = toml::from_slice(&raw).ok()?;
 
@@ -31,6 +42,14 @@ pub fn deserialise_cached_headers(path: &Path) -> Option<HeaderMap<HeaderValue>>
             "cache version ({:?}) != to this version ({:?}), ignoring cache at: {}",
             cache.version,
             crate::version(),
+            path.display()
+        );
+        return None;
+    } else if cache.config_hash.as_deref() != Some(config_hash) {
+        debug!(
+            "cache config hash mismatch ({:?}) != ({:?}), ignoring cache at: {}",
+            cache.config_hash,
+            config_hash,
             path.display()
         );
         return None;
