@@ -6,11 +6,13 @@ use log::debug;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 
+use crate::config::ConfigHash;
+
 #[derive(Debug, Serialize)]
 pub struct RequestCacheWrite<'a> {
     pub headers: Vec<(&'a str, &'a str)>,
     pub version: &'a str,
-    pub config_hash: &'a str,
+    pub config_hash: ConfigHash<'a>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,7 +34,7 @@ struct RequestCacheRead {
 
 pub fn deserialise_cached_headers(
     path: &Path,
-    config_hash: &str,
+    config_hash: ConfigHash<'_>,
 ) -> Option<HeaderMap<HeaderValue>> {
     let raw = fs::read(path).ok()?;
     let cache: RequestCacheRead = toml::from_slice(&raw).ok()?;
@@ -45,7 +47,7 @@ pub fn deserialise_cached_headers(
             path.display()
         );
         return None;
-    } else if cache.config_hash.as_deref() != Some(config_hash) {
+    } else if cache.config_hash.as_deref() != Some(config_hash.0) {
         debug!(
             "cache config hash mismatch ({:?}) != ({:?}), ignoring cache at: {}",
             cache.config_hash,

@@ -8,10 +8,13 @@ use basic_toml as toml;
 use cryptoxide::{blake2b::Blake2b, digest::Digest};
 use eyre::WrapErr;
 use log::{debug, warn};
-use serde::{de, Deserialize, Deserializer};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use simple_eyre::eyre;
 use time::format_description::OwnedFormatItem;
 use time::{Date, OffsetDateTime, PrimitiveDateTime, Time, UtcOffset};
+
+#[derive(Debug, Eq, PartialEq, Serialize, Clone, Copy)]
+pub struct ConfigHash<'a>(pub &'a str);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
