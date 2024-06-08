@@ -12,6 +12,10 @@ pub fn new() -> eyre::Result<BaseDirs> {
     Ok(BaseDirs)
 }
 
+pub fn home_dir() -> Option<PathBuf> {
+    ::dirs::home_dir()
+}
+
 impl BaseDirs {
     pub fn place_config_file<P: AsRef<Path>>(&self, path: P) -> eyre::Result<PathBuf> {
         ::dirs::config_dir()
