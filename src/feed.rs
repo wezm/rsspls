@@ -291,34 +291,50 @@ fn extract_description(
     item: &NodeDataRef<ElementData>,
     title: &str,
 ) -> eyre::Result<Option<String>> {
-    let node = config.summary.as_ref().and_then(|selector| {
-        item.as_node()
-            .select_first(selector)
-            .map_err(|()| {
-                warn!(
-                    "summary selector for item with title '{}' did not match anything",
-                    title.trim()
-                )
-            })
-            .ok()
-    });
-    if node.is_none() {
+    let Some(selector) = &config.summary else {
         return Ok(None);
-    }
+    };
 
-    node.map(|node| {
-        let mut text = Vec::new();
+    let nodes = item
+        .as_node()
+        .select(selector)
+        .map_err(|()| {
+            warn!(
+                "summary selector for item with title '{}' did not match anything",
+                title.trim()
+            )
+        })
+        .ok();
+    let Some(nodes) = nodes else {
+        return Ok(None);
+    };
+
+    let mut text = Vec::new();
+    for node in nodes {
         node.as_node()
             .serialize(&mut text)
-            .wrap_err("unable to serialise description")
-            .map(|()| String::from_utf8(text).unwrap()) // NOTE(unwrap): Should be safe as XML has to be legit Unicode)
-    })
-    .transpose()
+            .wrap_err("unable to serialise description")?
+    }
+
+    // NOTE(unwrap): Should be safe as XML has to be legit Unicode)
+    Ok(Some(String::from_utf8(text).unwrap()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn test_config() -> FeedConfig {
+        FeedConfig {
+            url: String::new(),
+            item: String::new(),
+            heading: String::new(),
+            link: None,
+            summary: None,
+            date: None,
+            media: None,
+        }
+    }
 
     #[test]
     fn test_trim_date() {
@@ -339,5 +355,22 @@ mod tests {
         rewrite_urls(&doc, &base).unwrap();
         let rewritten = doc.to_string();
         assert_eq!(rewritten, expected);
+    }
+
+    #[test]
+    fn test_extract_description_multi() {
+        // Test CSS selector for description that matches multiple elements
+        let html = r#"<html><body><div class="item"><p>one</p><span>two</span></body></html>"#;
+        let doc = kuchiki::parse_html().one(html);
+        let item = doc.select_first(".item").unwrap();
+        let config = FeedConfig {
+            summary: Some("p, span".to_string()),
+            ..test_config()
+        };
+
+        let description = extract_description(&config, &item, "title")
+            .unwrap()
+            .unwrap();
+        assert_eq!(description, "<p>one</p><span>two</span>");
     }
 }
