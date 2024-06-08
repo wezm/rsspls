@@ -125,12 +125,14 @@ async fn try_main() -> eyre::Result<bool> {
     let dirs = Arc::new(Mutex::new(dirs));
 
     // Spawn the tasks
+    let config_hash = Arc::new(config.hash.clone());
     let futures = config.feed.into_iter().map(|feed| {
         let client = client.clone(); // Client uses Arc internally
         let output_dir = output_dir.clone();
         let dirs = Arc::clone(&dirs);
+        let config_hash = Arc::clone(&config_hash);
         tokio::spawn(async move {
-            let res = process(&feed, &client, output_dir, dirs).await;
+            let res = process(&feed, &client, &config_hash, output_dir, dirs).await;
             if let Err(ref report) = res {
                 // Eat errors when processing feeds so that we don't stop processing the others.
                 // Errors are reported, then we return a boolean indicating success or not, which
@@ -154,6 +156,7 @@ async fn try_main() -> eyre::Result<bool> {
 async fn process(
     feed: &ChannelConfig,
     client: &Client,
+    config_hash: &str,
     output_dir: PathBuf,
     dirs: Dirs,
 ) -> Result<(), Report> {
@@ -170,9 +173,9 @@ async fn process(
         dirs.place_cache_file(&cache_filename)
             .wrap_err("unable to create path to cache file")
     }?;
-    let cached_headers = deserialise_cached_headers(&cache_path);
+    let cached_headers = deserialise_cached_headers(&cache_path, config_hash);
 
-    process_feed(client, feed, &cached_headers)
+    process_feed(client, feed, config_hash, &cached_headers)
         .await
         .and_then(|ref process_result| {
             match process_result {
