@@ -5,17 +5,24 @@ use std::str::FromStr;
 use std::{fmt, fs};
 
 use basic_toml as toml;
+use cryptoxide::{blake2b::Blake2b, digest::Digest};
 use eyre::WrapErr;
 use log::{debug, warn};
-use serde::{de, Deserialize, Deserializer};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use simple_eyre::eyre;
 use time::format_description::OwnedFormatItem;
 use time::{Date, OffsetDateTime, PrimitiveDateTime, Time, UtcOffset};
+
+#[derive(Debug, Eq, PartialEq, Serialize, Clone, Copy)]
+pub struct ConfigHash<'a>(pub &'a str);
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub rsspls: RssplsConfig,
     pub feed: Vec<ChannelConfig>,
+    /// Blake2b digest of the config file
+    #[serde(skip)]
+    pub hash: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,12 +83,18 @@ impl Config {
                 config_path.display()
             )
         })?;
-        toml::from_slice(&raw_config).wrap_err_with(|| {
+        let mut context = Blake2b::new(32);
+        context.input(&raw_config);
+        let digest = context.result_str();
+
+        let mut config: Config = toml::from_slice(&raw_config).wrap_err_with(|| {
             format!(
                 "unable to parse configuration file: {}",
                 config_path.display()
             )
-        })
+        })?;
+        config.hash = digest;
+        Ok(config)
     }
 }
 

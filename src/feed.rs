@@ -14,7 +14,7 @@ use time::OffsetDateTime;
 use url::Url;
 
 use crate::cache::RequestCacheWrite;
-use crate::config::{ChannelConfig, DateConfig, FeedConfig};
+use crate::config::{ChannelConfig, ConfigHash, DateConfig, FeedConfig};
 
 pub enum ProcessResult {
     NotModified,
@@ -27,6 +27,7 @@ pub enum ProcessResult {
 pub async fn process_feed(
     client: &Client,
     channel_config: &ChannelConfig,
+    config_hash: ConfigHash<'_>,
     cached_headers: &Option<HeaderMap>,
 ) -> eyre::Result<ProcessResult> {
     let config = &channel_config.config;
@@ -81,6 +82,7 @@ pub async fn process_feed(
     let map = RequestCacheWrite {
         headers,
         version: crate::version(),
+        config_hash,
     };
     let serialised_headers = toml::to_string(&map)
         .map_err(|err| warn!("unable to serialise headers: {}", err))

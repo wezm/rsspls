@@ -192,6 +192,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cryptoxide"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "382ce8820a5bb815055d3553a610e8cb542b2d767bbacea99038afda96cd760d"
+
+[[package]]
 name = "cssparser"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1315,6 +1321,7 @@ dependencies = [
  "atomicwrites",
  "basic-toml",
  "chrono",
+ "cryptoxide",
  "dirs",
  "futures",
  "kuchiki",
