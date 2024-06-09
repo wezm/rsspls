@@ -39,7 +39,8 @@ pub struct FeedConfig {
     pub item: String,
     pub heading: String,
     pub link: Option<String>,
-    pub summary: Option<String>,
+    #[serde(default, deserialize_with = "string_or_seq_string")]
+    pub summary: Vec<String>,
     #[serde(default, deserialize_with = "opt_string_or_struct")]
     pub date: Option<DateConfig>,
     pub media: Option<String>,
@@ -203,8 +204,40 @@ where
     deserializer.deserialize_any(StringOrStruct(PhantomData))
 }
 
+// https://stackoverflow.com/a/43627388/38820
+fn string_or_seq_string<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct StringOrVec(PhantomData<Vec<String>>);
+
+    impl<'de> de::Visitor<'de> for StringOrVec {
+        type Value = Vec<String>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("string or sequence of strings")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(vec![value.to_owned()])
+        }
+
+        fn visit_seq<S>(self, visitor: S) -> Result<Self::Value, S::Error>
+        where
+            S: de::SeqAccess<'de>,
+        {
+            Deserialize::deserialize(de::value::SeqAccessDeserializer::new(visitor))
+        }
+    }
+
+    deserializer.deserialize_any(StringOrVec(PhantomData))
+}
+
 // https://github.com/emk/compose_yml/blob/7e8e0f47dcc41cf08e15fe082ef4c40b5f0475eb/src/v2/string_or_struct.rs#L69
-pub fn opt_string_or_struct<'de, T, D>(d: D) -> Result<Option<T>, D::Error>
+fn opt_string_or_struct<'de, T, D>(d: D) -> Result<Option<T>, D::Error>
 where
     T: Deserialize<'de> + FromStr<Err = Infallible>,
     D: Deserializer<'de>,
