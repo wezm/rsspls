@@ -30,7 +30,7 @@ log = "0.4.21"
 mime_guess = { version = "2.0.4", default-features = false }
 pico-args = "0.5.0"
 pretty_env_logger = "0.5.0"
-reqwest = { version = "0.11.24", default-features = false, features = ["rustls-tls", "gzip", "socks"] }
+reqwest = { version = "0.11.24", default-features = false, features = ["gzip", "socks"] }
 rss = "2.0.7"
 serde = { version = "1.0.197", features = ["derive"] }
 simple-eyre = "0.3.1"
@@ -46,3 +46,11 @@ dirs = "5.0.1"
 
 [target.'cfg(not(windows))'.dependencies]
 xdg = "2.5.2"
+
+[profile.release]
+strip = "debuginfo"
+
+[features]
+default = ["rust-tls"]
+native-tls = ["reqwest/native-tls"]
+rust-tls = ["reqwest/rustls-tls"]
