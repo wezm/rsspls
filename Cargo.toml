@@ -1,6 +1,6 @@
 [package]
 name = "rsspls"
-version = "0.8.1"
+version = "0.9.0-pre"
 edition = "2021"
 authors = [
     "Wesley Moore <wes@wezm.net>"
