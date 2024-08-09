@@ -21,24 +21,24 @@ categories = ["command-line-utilities", "web-programming"]
 [dependencies]
 anydate = "0.4.0"
 atomicwrites = "0.4.3"
-basic-toml = "0.1.8"
-chrono = { version = "0.4.35", default-features = false }
+basic-toml = "0.1.9"
+chrono = { version = "0.4.38", default-features = false }
 cryptoxide = { version = "0.4.4", features = ["blake2"], default-features = false }
 futures = { version = "0.3.30", default-features = false, features = ["std"] }
 kuchiki = "0.8.1"
-log = "0.4.21"
-mime_guess = { version = "2.0.4", default-features = false }
+log = "0.4.22"
+mime_guess = { version = "2.0.5", default-features = false }
 pico-args = "0.5.0"
 pretty_env_logger = "0.5.0"
-reqwest = { version = "0.11.24", default-features = false, features = ["gzip", "socks"] }
-rss = "2.0.7"
-serde = { version = "1.0.197", features = ["derive"] }
+reqwest = { version = "0.12.5", default-features = false, features = ["gzip", "socks"] }
+rss = "2.0.8"
+serde = { version = "1.0.205", features = ["derive"] }
 simple-eyre = "0.3.1"
-tokio = { version = "1.36.0", features = ["rt-multi-thread", "macros"] }
-url = "2.5.0"
+tokio = { version = "1.39.2", features = ["rt-multi-thread", "macros"] }
+url = "2.5.2"
 
 [dependencies.time]
-version = "0.3.34"
+version = "0.3.36"
 features = ["parsing", "formatting", "macros"]
 
 [target.'cfg(windows)'.dependencies]
