@@ -24,6 +24,14 @@ pub enum ProcessResult {
     },
 }
 
+pub enum FetchResult {
+    NotModified,
+    Ok {
+        html: String,
+        headers: Option<String>,
+    },
+}
+
 pub async fn process_feed(
     client: &Client,
     channel_config: &ChannelConfig,
@@ -36,60 +44,14 @@ pub async fn process_feed(
         .url
         .parse()
         .wrap_err_with(|| format!("unable to parse {} as a URL", config.url))?;
-    let req = add_headers(
-        client.get(url.clone()),
-        cached_headers,
-        &channel_config.user_agent,
-    );
 
-    let resp = req
-        .send()
-        .await
-        .wrap_err_with(|| format!("unable to fetch {}", url))?;
-
-    // Check response
-    let status = resp.status();
-    if status == StatusCode::NOT_MODIFIED {
-        // Cache hit, nothing to do
-        info!("{} is unmodified", url);
-        return Ok(ProcessResult::NotModified);
-    }
-
-    if !status.is_success() {
-        return Err(eyre!(
-            "failed to fetch {}: {} {}",
-            config.url,
-            status.as_str(),
-            status.canonical_reason().unwrap_or("Unknown Status")
-        ));
-    }
-
-    if config.link.is_none() {
-        info!(
-            "no explicit link selector provided, falling back to heading selector: {:?}",
-            config.heading
-        );
-    }
+    let (html, serialised_headers) =
+        match fetch_webpage(client, &url, cached_headers, channel_config, config_hash).await? {
+            FetchResult::Ok { html, headers } => (html, headers),
+            FetchResult::NotModified => return Ok(ProcessResult::NotModified),
+        };
 
     let link_selector = config.link.as_ref().unwrap_or(&config.heading);
-
-    // Collect the headers for later
-    let headers: Vec<_> = resp
-        .headers()
-        .iter()
-        .filter_map(|(name, value)| value.to_str().ok().map(|val| (name.as_str(), val)))
-        .collect();
-    let map = RequestCacheWrite {
-        headers,
-        version: crate::version(),
-        config_hash,
-    };
-    let serialised_headers = toml::to_string(&map)
-        .map_err(|err| warn!("unable to serialise headers: {}", err))
-        .ok();
-
-    // Read body
-    let html = resp.text().await.wrap_err("unable to read response body")?;
 
     let doc = kuchiki::parse_html().one(html);
     let base_url = Url::options().base_url(Some(&url));
@@ -121,6 +83,88 @@ pub async fn process_feed(
 
     Ok(ProcessResult::Ok {
         channel,
+        headers: serialised_headers,
+    })
+}
+
+async fn fetch_webpage(
+    client: &Client,
+    url: &Url,
+    cached_headers: &Option<HeaderMap>,
+    channel_config: &ChannelConfig,
+    config_hash: ConfigHash<'_>,
+) -> eyre::Result<FetchResult> {
+    if url.scheme() == "file" {
+        todo!("support file urls")
+    } else {
+        fetch_webpage_http(client, url, cached_headers, channel_config, config_hash).await
+    }
+}
+
+async fn fetch_webpage_http(
+    client: &Client,
+    url: &Url,
+    cached_headers: &Option<HeaderMap>,
+    channel_config: &ChannelConfig,
+    config_hash: ConfigHash<'_>,
+) -> eyre::Result<FetchResult> {
+    let config = &channel_config.config;
+
+    let req = add_headers(
+        client.get(url.clone()),
+        cached_headers,
+        &channel_config.user_agent,
+    );
+
+    let resp = req
+        .send()
+        .await
+        .wrap_err_with(|| format!("unable to fetch {}", url))?;
+
+    // Check response
+    let status = resp.status();
+    if status == StatusCode::NOT_MODIFIED {
+        // Cache hit, nothing to do
+        info!("{} is unmodified", url);
+        return Ok(FetchResult::NotModified);
+    }
+
+    if !status.is_success() {
+        return Err(eyre!(
+            "failed to fetch {}: {} {}",
+            config.url,
+            status.as_str(),
+            status.canonical_reason().unwrap_or("Unknown Status")
+        ));
+    }
+
+    if config.link.is_none() {
+        info!(
+            "no explicit link selector provided, falling back to heading selector: {:?}",
+            config.heading
+        );
+    }
+
+    // Collect the headers for later
+    let headers: Vec<_> = resp
+        .headers()
+        .iter()
+        .filter_map(|(name, value)| value.to_str().ok().map(|val| (name.as_str(), val)))
+        .collect();
+    let map = RequestCacheWrite {
+        headers,
+        version: crate::version(),
+        config_hash,
+    };
+    let serialised_headers = toml::to_string(&map)
+        .map_err(|err| warn!("unable to serialise headers: {}", err))
+        .ok();
+
+    // Read body
+    let html = resp.text().await.wrap_err("unable to read response body")?;
+
+    Ok(FetchResult::Ok {
+        html,
         headers: serialised_headers,
     })
 }
