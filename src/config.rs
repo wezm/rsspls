@@ -29,6 +29,9 @@ pub struct Config {
 pub struct RssplsConfig {
     pub output: Option<String>,
     pub proxy: Option<String>,
+    /// Whether to allow fetching web pages from file URLs
+    #[serde(default)]
+    pub file_urls: bool,
 }
 
 #[derive(Debug, Deserialize)]

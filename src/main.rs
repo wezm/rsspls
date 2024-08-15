@@ -22,7 +22,7 @@ use atomicwrites::AtomicFile;
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
 use log::{debug, error, info};
-use reqwest::Client;
+use reqwest::Client as HttpClient;
 use rss::Channel;
 use simple_eyre::eyre;
 
@@ -33,6 +33,14 @@ use crate::dirs::Dirs;
 use crate::feed::{process_feed, ProcessResult};
 
 const RSSPLS_LOG: &str = "RSSPLS_LOG";
+
+#[derive(Clone)]
+pub struct Client {
+    /// Whether file URLs are enabled
+    file_urls: bool,
+    /// HTTP client
+    http: HttpClient,
+}
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -94,7 +102,7 @@ async fn try_main() -> eyre::Result<bool> {
     // Set up the HTTP client
     let connect_timeout = Duration::from_secs(10);
     let timeout = Duration::from_secs(30);
-    let mut client_builder = Client::builder()
+    let mut client_builder = HttpClient::builder()
         .connect_timeout(connect_timeout)
         .timeout(timeout);
 
@@ -116,9 +124,13 @@ async fn try_main() -> eyre::Result<bool> {
         }
     };
 
-    let client = client_builder
-        .build()
-        .wrap_err("unable to build HTTP client")?;
+    let client = Client {
+        file_urls: config.rsspls.file_urls,
+
+        http: client_builder
+            .build()
+            .wrap_err("unable to build HTTP client")?,
+    };
 
     // Wrap up xdg::BaseDirectories for sharing between tasks. Mutex is used so that only one
     // thread at a time will attempt to create cache directories.

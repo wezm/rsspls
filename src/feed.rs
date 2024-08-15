@@ -1,4 +1,4 @@
-use std::mem;
+use std::{fs, mem};
 
 use basic_toml as toml;
 use kuchiki::traits::TendrilSink;
@@ -6,15 +6,17 @@ use kuchiki::{ElementData, NodeDataRef, NodeRef};
 use log::{debug, error, info, warn};
 use mime_guess::mime;
 use reqwest::header::HeaderMap;
-use reqwest::{Client, RequestBuilder, StatusCode};
+use reqwest::{RequestBuilder, StatusCode};
 use rss::{Channel, ChannelBuilder, EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
-use simple_eyre::eyre::{self, eyre, WrapErr};
+use simple_eyre::eyre::{self, bail, eyre, WrapErr};
 use time::format_description::well_known::Rfc2822;
 use time::OffsetDateTime;
+use tokio::task;
 use url::Url;
 
 use crate::cache::RequestCacheWrite;
 use crate::config::{ChannelConfig, ConfigHash, DateConfig, FeedConfig};
+use crate::Client;
 
 pub enum ProcessResult {
     NotModified,
@@ -95,7 +97,11 @@ async fn fetch_webpage(
     config_hash: ConfigHash<'_>,
 ) -> eyre::Result<FetchResult> {
     if url.scheme() == "file" {
-        todo!("support file urls")
+        if client.file_urls {
+            fetch_webpage_local(url).await
+        } else {
+            bail!("unable to fetch: {url} as file URLs are not enabled in config")
+        }
     } else {
         fetch_webpage_http(client, url, cached_headers, channel_config, config_hash).await
     }
@@ -111,7 +117,7 @@ async fn fetch_webpage_http(
     let config = &channel_config.config;
 
     let req = add_headers(
-        client.get(url.clone()),
+        client.http.get(url.clone()),
         cached_headers,
         &channel_config.user_agent,
     );
@@ -166,6 +172,23 @@ async fn fetch_webpage_http(
     Ok(FetchResult::Ok {
         html,
         headers: serialised_headers,
+    })
+}
+
+async fn fetch_webpage_local(url: &Url) -> eyre::Result<FetchResult> {
+    let path = url
+        .to_file_path()
+        .map_err(|()| eyre!("unable to extract path from: {}", url))?;
+    debug!("read {}", path.display());
+    let html = task::spawn_blocking(move || {
+        fs::read_to_string(&path).wrap_err_with(|| format!("error reading {}", path.display()))
+    })
+    .await
+    .wrap_err_with(|| format!("error joining task for {url}"))??;
+
+    Ok(FetchResult::Ok {
+        html,
+        headers: None,
     })
 }
 
