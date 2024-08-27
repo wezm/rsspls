@@ -18,6 +18,7 @@ use crate::cache::RequestCacheWrite;
 use crate::config::{ChannelConfig, ConfigHash, DateConfig, FeedConfig};
 use crate::Client;
 
+#[derive(Debug)]
 pub enum ProcessResult {
     NotModified,
     Ok {
@@ -394,7 +395,32 @@ fn extract_description(
 
 #[cfg(test)]
 mod tests {
+    use std::path::{Path, PathBuf};
+    use std::{env, process};
+
+    use reqwest::Client as HttpClient;
+
     use super::*;
+
+    const HTML: &str = include_str!("../tests/local.html");
+
+    struct RmOnDrop(PathBuf);
+
+    impl RmOnDrop {
+        fn new(path: PathBuf) -> Self {
+            RmOnDrop(path)
+        }
+
+        fn path(&self) -> &Path {
+            &self.0
+        }
+    }
+
+    impl Drop for RmOnDrop {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.0);
+        }
+    }
 
     fn test_config() -> FeedConfig {
         FeedConfig {
@@ -465,5 +491,94 @@ mod tests {
 
         // Items come out in the order of the selector array
         assert_eq!(description, "<span>two</span><p>one</p>");
+    }
+
+    #[test]
+    fn test_process_local_html() {
+        let html_file_name = format!("rsspls.local.{}.html", process::id());
+        let local_html = RmOnDrop::new(env::temp_dir().join(&html_file_name));
+        fs::write(local_html.path(), HTML.as_bytes()).expect("unable to write test HTML");
+
+        let url = Url::from_file_path(local_html.path())
+            .expect("unable to construct file URL for test HTML");
+
+        let client = Client {
+            file_urls: true,
+            http: HttpClient::new(),
+        };
+
+        let config = FeedConfig {
+            url: url.to_string(),
+            item: "nav a".to_string(),
+            heading: "a".to_string(),
+            ..test_config()
+        };
+        let channel_config = ChannelConfig {
+            title: "Local Site".to_string(),
+            filename: Path::new(&html_file_name)
+                .with_extension("rss")
+                .to_string_lossy()
+                .into_owned(),
+            user_agent: None,
+            config,
+        };
+        let config_hash = ConfigHash(&html_file_name);
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let res = runtime
+            .block_on(process_feed(&client, &channel_config, config_hash, &None))
+            .expect("unable to process local feed");
+
+        let ProcessResult::Ok { channel, .. } = res else {
+            panic!("expected ProcessResult::Ok but got: {:?}", res)
+        };
+
+        assert_eq!(channel.items().len(), 5);
+        assert_eq!(channel.items()[0].title, Some("Install".to_string()));
+    }
+
+    #[test]
+    fn test_process_local_files_disabled() {
+        let html_file_name = "rsspls.local.html";
+        let local_html = env::temp_dir().join(&html_file_name);
+        let url =
+            Url::from_file_path(&local_html).expect("unable to construct file URL for test HTML");
+
+        let client = Client {
+            file_urls: false,
+            http: HttpClient::new(),
+        };
+
+        let config = FeedConfig {
+            url: url.to_string(),
+            item: "nav a".to_string(),
+            heading: "a".to_string(),
+            ..test_config()
+        };
+        let channel_config = ChannelConfig {
+            title: "Local Site".to_string(),
+            filename: Path::new(&html_file_name)
+                .with_extension("rss")
+                .to_string_lossy()
+                .into_owned(),
+            user_agent: None,
+            config,
+        };
+        let config_hash = ConfigHash(&html_file_name);
+
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let res = runtime.block_on(process_feed(&client, &channel_config, config_hash, &None));
+
+        let Err(err) = res else {
+            panic!("expected error, got: {:?}", res)
+        };
+
+        assert!(err
+            .to_string()
+            .contains("file URLs are not enabled in config"));
     }
 }

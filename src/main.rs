@@ -126,7 +126,6 @@ async fn try_main() -> eyre::Result<bool> {
 
     let client = Client {
         file_urls: config.rsspls.file_urls,
-
         http: client_builder
             .build()
             .wrap_err("unable to build HTTP client")?,
