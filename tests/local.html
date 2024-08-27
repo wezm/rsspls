@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Documentation - RSS Please </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+<link rel="icon" href="https://rsspls.7bit.org/feed-icon.svg">
+
+    <style>
+    :root {
+        /* Primary theme color */
+        --primary-color: #50BDB6;
+        /* Primary theme text color */
+        --primary-text-color: #0C4A4C;
+        --primary-text-color-over: #282B2B;
+        /* Primary theme link color */
+        --primary-link-color: #1F827B;
+        /* Secondary color: the background body color */
+        --secondary-color: #fff;
+        --secondary-text-color: #1F827B;
+        /* Highlight text color of table of content */
+        --toc-highlight-text-color: #282B2B;
+        --toc-background-color: #fff;
+        --code-color: initial;
+        --code-background-color: initial;
+        --shadow-color: #ddd;
+        /* Font used for headers (h1 & h2) */
+        --header-font-family: Firava, "Fira Sans", sans-serif;
+        /* Font used for text */
+        --text-font-family: Firava, "Fira Sans", sans-serif;
+        --button-color: #000;
+        --button-hover-color: #282B2B;
+        --button-text-color: #fff;
+        --content-text-color: #282B2B;
+        --content-heading-text-color: #282B2B;
+        --footer-background-color: #FACD69;
+        --footer-text-color: #282B2B;
+    }
+</style>
+
+    
+
+    <link rel="stylesheet" href="/normalize.css">
+    <link rel="stylesheet" href="https://rsspls.7bit.org/juice.css">
+    
+    <link rel="stylesheet" href="https://rsspls.7bit.org/home.css?v=2">
+    <link rel="stylesheet" href="https://rsspls.7bit.org/syntax.css">
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://rsspls.7bit.org/index.xml">
+
+    
+    <meta property="og:url" content="https:&#x2F;&#x2F;rsspls.7bit.org&#x2F;documentation&#x2F;" />
+    <meta property="og:title" content="Documentation - RSS Please" />
+    <meta property="og:description" content="" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_AU" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:creator" content="@wezm" />
+
+</head>
+
+<body>
+    
+<header class="box-shadow">
+    
+
+<a href="https://rsspls.7bit.org/">
+    <div class="logo">
+        <img src="https://rsspls.7bit.org/feed-icon.svg" alt="logo">
+        RSS Please
+    </div>
+</a>
+
+<nav>
+    
+    
+    
+    <a class="nav-item subtitle-text" href="https://rsspls.7bit.org/install/">Install</a>
+    
+    
+    
+    
+    <a class="nav-item subtitle-text" href="https://rsspls.7bit.org/documentation/">Documentation</a>
+    
+    
+    
+        
+        <a class="nav-item subtitle-text" href="/news/">News</a>
+        
+        <a class="nav-item subtitle-text" href="https://github.com/sponsors/wezm">Sponsor</a>
+        
+        <a class="nav-item subtitle-text" href="https://github.com/wezm/rsspls">GitHub</a>
+        
+    
+</nav>
+
+</header>
+
+
+    <main>
+        
+        
+        
+        
+        
+        <div class="toc">
+            <div class="toc-sticky">
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#how-it-works">How it Works</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#supported-platforms">Supported Platforms</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#usage">Usage</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#configuration">Configuration</a>
+                </div>
+                
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#annotated-sample-configuration"><small>- Annotated Sample Configuration</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#output"><small>- output</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#proxy"><small>- proxy</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-title"><small>- feed.title</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-filename"><small>- feed.filename</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-url"><small>- feed.config.url</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-item"><small>- feed.config.item</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-heading"><small>- feed.config.heading</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-link"><small>- feed.config.link</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-summary"><small>- feed.config.summary</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-date"><small>- feed.config.date</small></a>
+                </div>
+                
+                <div class="toc-item-child">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#feed-config-media"><small>- feed.config.media</small></a>
+                </div>
+                
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#hosting-updating-and-subscribing">Hosting, Updating, and Subscribing</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#logging">Logging</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#caveats-error-handling">Caveats &amp; Error Handling</a>
+                </div>
+                
+                
+                <div class="toc-item">
+                    <a class="subtext" href="https://rsspls.7bit.org/documentation/#caching">Caching</a>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        
+
+        <div class="content text">
+            
+
+<h1 class="heading-text">Documentation</h1>
+
+
+
+<h2 id="how-it-works">How it Works</h2>
+<p><code>rsspls</code> fetches each page specified by the configuration and extracts elements
+from the page using <a href="https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Selectors">CSS selectors</a>. For example elements are matched
+to determine the title and content of the feed entry. The generated feeds are
+written to an output directory. HTTP caching is used to only update the feed
+when the source page changes.</p>
+<h2 id="supported-platforms">Supported Platforms</h2>
+<p><code>rsspls</code> should work on all <a href="https://doc.rust-lang.org/stable/rustc/platform-support.html">platforms supported by the Rust compiler</a>
+including Linux, macOS, Windows, and BSD. Pre-compiled binaries are available
+for common platforms. See <a href="https://rsspls.7bit.org/install/">the install page</a> for details.</p>
+<h2 id="usage">Usage</h2>
+<pre style="background-color:#fafafa;color:#383a42;"><code><span>rsspls [OPTIONS] -o OUTPUT_DIR
+</span><span>
+</span><span>OPTIONS:
+</span><span>    -h, --help
+</span><span>            Prints this help information
+</span><span>
+</span><span>    -c, --config
+</span><span>            Specify the path to the configuration file.
+</span><span>            $XDG_CONFIG_HOME/rsspls/feeds.toml is used if not supplied.
+</span><span>
+</span><span>    -o, --output
+</span><span>            Directory to write generated feeds to.
+</span><span>
+</span><span>    -V, --version
+</span><span>            Prints version information
+</span><span>
+</span><span>FILES:
+</span><span>     ~/$XDG_CONFIG_HOME/rsspls/feeds.toml    rsspls configuration file.
+</span><span>     ~/$XDG_CONFIG_HOME/rsspls               Configuration directory.
+</span><span>     ~/XDG_CACHE_HOME/rsspls                 Cache directory.
+</span><span>
+</span><span>     Note: XDG_CONFIG_HOME defaults to ~/.config, XDG_CACHE_HOME
+</span><span>     defaults to ~/.cache.
+</span></code></pre>
+<h2 id="configuration">Configuration</h2>
+<p>Unless specified via the <code>--config</code> command line option <code>rsspls</code> reads its
+configuration from one of the following paths:</p>
+<ul>
+<li>UNIX-like systems:
+<ul>
+<li><code>$XDG_CONFIG_HOME/rsspls/feeds.toml</code></li>
+<li><code>~/.config/rsspls/feeds.toml</code> if <code>XDG_CONFIG_HOME</code> is unset.</li>
+</ul>
+</li>
+<li>Windows:
+<ul>
+<li><code>C:\Users\You\AppData\Roaming\rsspls\feeds.toml</code></li>
+</ul>
+</li>
+</ul>
+<p>The configuration file is in <a href="https://toml.io/">TOML</a> format.</p>
+<p>The parts of the page to extract for the feed are specified using <a href="https://developer.mozilla.org/en-US/docs/Learn/CSS/Building_blocks/Selectors">CSS
+selectors</a>.</p>
+<h3 id="annotated-sample-configuration">Annotated Sample Configuration</h3>
+<p>The sample file below demonstrates all the parts of the configuration.</p>
+<pre data-lang="toml" style="background-color:#fafafa;color:#383a42;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#a0a1a7;"># The configuration must start with the [rsspls] section
+</span><span>[rsspls]
+</span><span style="color:#a0a1a7;"># Optional output directory to write the feeds to. If not specified it must be supplied via
+</span><span style="color:#a0a1a7;"># the --output command line option.
+</span><span style="color:#e45649;">output </span><span>= </span><span style="color:#50a14f;">&quot;/tmp&quot;
+</span><span style="color:#a0a1a7;"># Optional proxy address. If specified, all requests will be routed through it.
+</span><span style="color:#a0a1a7;"># The address needs to be in the format: protocol://ip_address:port
+</span><span style="color:#a0a1a7;"># The supported protocols are: http, https, socks and socks5h.
+</span><span style="color:#a0a1a7;"># It can also be specified as environment variable `http_proxy` or `HTTPS_PROXY`.
+</span><span style="color:#a0a1a7;"># The config file takes precedence, then the env vars in the above order.
+</span><span style="color:#a0a1a7;"># proxy = socks5://10.64.0.1:1080
+</span><span>
+</span><span style="color:#a0a1a7;"># Next is the array of feeds, each one starts with [[feed]]
+</span><span>[[feed]]
+</span><span style="color:#a0a1a7;"># The title of the channel in the feed
+</span><span style="color:#e45649;">title </span><span>= </span><span style="color:#50a14f;">&quot;My Great RSS Feed&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># The output filename without the output directory to write this feed to.
+</span><span style="color:#a0a1a7;"># Note: this is a filename only, not a path. It should not contain slashes.
+</span><span style="color:#e45649;">filename </span><span>= </span><span style="color:#50a14f;">&quot;wezm.rss&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># Optional User-Agent header to be set for the HTTP request.
+</span><span style="color:#a0a1a7;"># user_agent = &quot;Mozilla/5.0&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># The configuration for the feed
+</span><span>[feed.config]
+</span><span style="color:#a0a1a7;"># The URL of the web page to generate the feed from.
+</span><span style="color:#e45649;">url </span><span>= </span><span style="color:#50a14f;">&quot;https://www.wezm.net/&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># A CSS selector to select elements on the page that represent items in the feed.
+</span><span style="color:#e45649;">item </span><span>= </span><span style="color:#50a14f;">&quot;article&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># A CSS selector relative to `item` to an element that will supply the title for the item.
+</span><span style="color:#e45649;">heading </span><span>= </span><span style="color:#50a14f;">&quot;h3&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># A CSS selector relative to `item` to an element that will supply the link for the item.
+</span><span style="color:#a0a1a7;"># Note: This element must have a `href` attribute.
+</span><span style="color:#a0a1a7;"># Note: If not supplied rsspls will attempt to use the heading selector for link for backwards
+</span><span style="color:#a0a1a7;">#       compatibility with earlier versions. A message will be emitted in this case.
+</span><span style="color:#e45649;">link </span><span>= </span><span style="color:#50a14f;">&quot;h3 a&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># Optional CSS selector relative to `item` that will supply the content of the RSS item.
+</span><span style="color:#e45649;">summary </span><span>= </span><span style="color:#50a14f;">&quot;.post-body&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># Optional CSS selector relative to `item` that supplies media content (audio, video, image)
+</span><span style="color:#a0a1a7;"># to be added as an RSS enclosure.
+</span><span style="color:#a0a1a7;"># Note: The media URL must be given by the `src` or `href` attribute of the selected element.
+</span><span style="color:#a0a1a7;"># Note: Currently if the item does not match the media selector then it will be skipped.
+</span><span style="color:#a0a1a7;"># media = &quot;figure img&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># Optional CSS selector relative to `item` that supples the publication date of the RSS item.
+</span><span style="color:#e45649;">date </span><span>= </span><span style="color:#50a14f;">&quot;time&quot;
+</span><span>
+</span><span style="color:#a0a1a7;"># Alternatively for more control `date` can be specified as a table:
+</span><span style="color:#a0a1a7;"># [feed.config.date]
+</span><span style="color:#a0a1a7;"># selector = &quot;time&quot;
+</span><span style="color:#a0a1a7;"># # Optional type of value being parsed.
+</span><span style="color:#a0a1a7;"># # Defaults to DateTime, can also be Date if you&#39;re parsing a value without a time.
+</span><span style="color:#a0a1a7;"># type = &quot;Date&quot; 
+</span><span style="color:#a0a1a7;"># # format of the date to parse. See the following for the syntax
+</span><span style="color:#a0a1a7;"># # https://time-rs.github.io/book/api/format-description.html
+</span><span style="color:#a0a1a7;"># format = &quot;[day padding:none]/[month padding:none]/[year]&quot; # will parse 1/2/1934 style dates
+</span><span>
+</span><span style="color:#a0a1a7;"># A second example feed
+</span><span>[[feed]]
+</span><span style="color:#e45649;">title </span><span>= </span><span style="color:#50a14f;">&quot;Example Site&quot;
+</span><span style="color:#e45649;">filename </span><span>= </span><span style="color:#50a14f;">&quot;example.rss&quot;
+</span><span>
+</span><span>[feed.config]
+</span><span style="color:#e45649;">url </span><span>= </span><span style="color:#50a14f;">&quot;https://example.com/&quot;
+</span><span style="color:#e45649;">item </span><span>= </span><span style="color:#50a14f;">&quot;div&quot;
+</span><span style="color:#e45649;">heading </span><span>= </span><span style="color:#50a14f;">&quot;a&quot;
+</span></code></pre>
+<p>The first example above (for my blog WezM.net) matches HTML that looks like this:</p>
+<pre data-lang="html" style="background-color:#fafafa;color:#383a42;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;</span><span style="color:#e45649;">section </span><span style="color:#c18401;">class</span><span>=</span><span style="color:#50a14f;">&quot;posts-section&quot;</span><span>&gt;
+</span><span>  &lt;</span><span style="color:#e45649;">h2</span><span>&gt;Recent Posts&lt;/</span><span style="color:#e45649;">h2</span><span>&gt;
+</span><span>
+</span><span>  &lt;</span><span style="color:#e45649;">article </span><span style="color:#c18401;">id</span><span>=</span><span style="color:#50a14f;">&quot;garage-door-monitor&quot;</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#e45649;">h3</span><span>&gt;&lt;</span><span style="color:#e45649;">a </span><span style="color:#c18401;">href</span><span>=</span><span style="color:#50a14f;">&quot;https://www.wezm.net/v2/posts/2022/garage-door-monitor/&quot;</span><span>&gt;Monitoring My Garage Door With a Raspberry Pi, Rust, and a 13Mb Linux System&lt;/</span><span style="color:#e45649;">a</span><span>&gt;&lt;/</span><span style="color:#e45649;">h3</span><span>&gt;
+</span><span>    &lt;</span><span style="color:#e45649;">div </span><span style="color:#c18401;">class</span><span>=</span><span style="color:#50a14f;">&quot;post-metadata&quot;</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#e45649;">div </span><span style="color:#c18401;">class</span><span>=</span><span style="color:#50a14f;">&quot;date-published&quot;</span><span>&gt;
+</span><span>        &lt;</span><span style="color:#e45649;">time </span><span style="color:#c18401;">datetime</span><span>=</span><span style="color:#50a14f;">&quot;2022-04-20T06:38:27+10:00&quot;</span><span>&gt;20 April 2022&lt;/</span><span style="color:#e45649;">time</span><span>&gt;
+</span><span>      &lt;/</span><span style="color:#e45649;">div</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#e45649;">div</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#e45649;">div </span><span style="color:#c18401;">class</span><span>=</span><span style="color:#50a14f;">&quot;post-body&quot;</span><span>&gt;
+</span><span>      &lt;</span><span style="color:#e45649;">p</span><span>&gt;I’ve accidentally left our garage door open a few times. To combat this I built
+</span><span>        a monitor that sends an alert via Mattermost when the door has been left open
+</span><span>        for more than 5 minutes. This turned out to be a super fun project. I used
+</span><span>        parts on hand as much as possible, implemented the monitoring application in
+</span><span>        Rust, and then built a stripped down Linux image to run it.
+</span><span>      &lt;/</span><span style="color:#e45649;">p</span><span>&gt;
+</span><span>    &lt;/</span><span style="color:#e45649;">div</span><span>&gt;
+</span><span>
+</span><span>    &lt;</span><span style="color:#e45649;">a </span><span style="color:#c18401;">href</span><span>=</span><span style="color:#50a14f;">&quot;https://www.wezm.net/v2/posts/2022/garage-door-monitor/&quot;</span><span>&gt;Continue Reading →&lt;/</span><span style="color:#e45649;">a</span><span>&gt;
+</span><span>  &lt;/</span><span style="color:#e45649;">article</span><span>&gt;
+</span><span>
+</span><span>  &lt;</span><span style="color:#e45649;">article </span><span style="color:#c18401;">id</span><span>=</span><span style="color:#50a14f;">&quot;monospace-kobo-ereader&quot;</span><span>&gt;
+</span><span>    </span><span style="color:#a0a1a7;">&lt;!-- another article --&gt;
+</span><span>  &lt;/</span><span style="color:#e45649;">article</span><span>&gt;
+</span><span>
+</span><span>  </span><span style="color:#a0a1a7;">&lt;!-- more articles --&gt;
+</span><span>
+</span><span>  &lt;</span><span style="color:#e45649;">a </span><span style="color:#c18401;">href</span><span>=</span><span style="color:#50a14f;">&quot;https://www.wezm.net/v2/posts/&quot;</span><span>&gt;View more posts →&lt;/</span><span style="color:#e45649;">a</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#e45649;">section</span><span>&gt;
+</span></code></pre>
+<h3 id="output">output</h3>
+<p>Optional output directory to write the feeds to. If not specified it must be
+supplied via the <code>--output</code> command line option. Directory will be created if
+it does not exist.</p>
+<p>Tilde expansion is performed on the path in the config file. This allows you to
+refer to the home directory of the user running <code>rsspls</code>. For example,
+<code>~/Documents/rsspls</code> could be used to place the output in your <code>Documents</code>
+folder.</p>
+<h3 id="proxy">proxy</h3>
+<p>Optional proxy address. If specified, all requests will be routed through it.
+The address needs to be in the format: <code>protocol://ip_address:port</code>
+The supported protocols are: http, https, socks and socks5h.</p>
+<p>The proxy for http and https requests can also be specified with the
+environment variables <code>http_proxy</code> and <code>HTTPS_PROXY</code> respectively.
+The config file takes precedence over environment variables.</p>
+<h3 id="feed-title">feed.title</h3>
+<p>The title of the channel in the generated feed.</p>
+<h3 id="feed-filename">feed.filename</h3>
+<p>The output filename to write this feed to. Note: this is a filename only, not a
+path. It should not contain slashes. It will be written to the <a href="https://rsspls.7bit.org/documentation/#output">output</a>
+directory.</p>
+<h3 id="feed-config-url">feed.config.url</h3>
+<p>The URL of the web page to generate the feed from. The page at this address
+will be fetched processed to turn it into a feed.</p>
+<h3 id="feed-config-item">feed.config.item</h3>
+<p>A CSS selector to select elements on the page that represent items in the feed.
+The other CSS selectors match elements inside the elements that this selector
+matches.</p>
+<h3 id="feed-config-heading">feed.config.heading</h3>
+<p>A CSS selector relative to <code>item</code> to an element that will supply the title for
+the item in the feed.</p>
+<h3 id="feed-config-link">feed.config.link</h3>
+<p>CSS selector relative to <code>item</code> to an element that will supply the
+link for the item in the feed.</p>
+<p><strong>Note:</strong> This element must have a <code>href</code> attribute.</p>
+<p><strong>Note:</strong> If not supplied <code>rsspls</code> will attempt to use the
+<code>feed.config.heading</code> selector as the <code>link</code> element for backwards compatibility
+with earlier versions. A warning message will be emitted in this case. It is
+recommended to specify the <code>link</code> selector explicitly.</p>
+<h3 id="feed-config-summary">feed.config.summary</h3>
+<p>Optional CSS selector relative to <code>item</code> that will supply the content of the
+RSS item. This value may be a single CSS selector, or an array of CSS
+selectors.</p>
+<p>The CSS selectors may also include a comma separated list of elements to match.
+For example: <code>summary = "p, blockquote"</code> will match <code>p</code> or <code>blockquote</code>
+elements, adding them to the RSS feed in the order then are encountered in the
+HTML document.</p>
+<p>The array form of <code>summary</code> allows the order of the matched elements to be
+controlled, enabling elements to be added to the feed in a different order to
+the source HTML document. For example, <code>summary = ["p", "blockquote"]</code> causes
+<code>rsspls</code> to make a pass over the source HTML document, adding <code>p</code> elements to
+the feed, followed by a pass adding <code>blockquote</code> elements to the feed.</p>
+<h3 id="feed-config-date">feed.config.date</h3>
+<p>The optional <code>date</code> key in the configuration can be a string  or a table. If it’s a
+string then it’s used as CSS selector relative to <code>item</code> to find the element
+containing the date and <code>rsspls</code> will attempt to automatically parse the value.</p>
+<p>If automatic parsing fails you can manually specify the format using the table
+form of <code>date</code>, which looks like this:</p>
+<pre data-lang="toml" style="background-color:#fafafa;color:#383a42;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[feed.config.date]
+</span><span style="color:#e45649;">selector </span><span>= </span><span style="color:#50a14f;">&quot;time&quot; </span><span style="color:#a0a1a7;"># required
+</span><span style="color:#e45649;">type </span><span>= </span><span style="color:#50a14f;">&quot;Date&quot;
+</span><span style="color:#e45649;">format </span><span>= </span><span style="color:#50a14f;">&quot;[day padding:none]/[month padding:none]/[year]&quot; </span><span style="color:#a0a1a7;"># will parse 1/2/1934 style dates
+</span></code></pre>
+<p>If the element matched by the <code>date</code> selector is a <code>&lt;time&gt;</code> element then
+<code>rsspls</code> will first try to parse the value in the <code>datetime</code> attribute if
+present. If the attribute is missing or the element is not a <code>time</code> element
+then <code>rsspls</code> will use the supplied format or attempt automatic parsing of the
+text content of the element.</p>
+<h4 id="feed-config-date-selector">feed.config.date.selector</h4>
+<p>CSS selector relative to <code>item</code> that supples the publication date of
+the RSS item.</p>
+<h4 id="feed-config-date-type">feed.config.date.type</h4>
+<p>Optional type of value being parsed. Either <code>Date</code> or <code>DateTime</code>.</p>
+<p><code>type</code> is <code>Date</code> when you want to parse just a date. Use <code>DateTime</code> if you’re
+parsing a date and time with the format. Defaults to <code>DateTime</code>.</p>
+<h4 id="feed-config-date-format">feed.config.date.format</h4>
+<p>Format description using the syntax described on this page:
+<a href="https://time-rs.github.io/book/api/format-description.html">https://time-rs.github.io/book/api/format-description.html</a>
+of how to parse the date.</p>
+<h3 id="feed-config-media">feed.config.media</h3>
+<p>Optional CSS selector relative to <code>item</code> that supplies media content (audio,
+video, image) to be added as an RSS enclosure.</p>
+<p><strong>Note:</strong> The media URL must be given by the <code>src</code> or <code>href</code> attribute of the
+selected element.</p>
+<p><strong>Note:</strong> Currently if the item does not match the media selector then it will
+be skipped.</p>
+<h2 id="hosting-updating-and-subscribing">Hosting, Updating, and Subscribing</h2>
+<p>In order to have the feeds update you will need to arrange for
+<code>rsspls</code> to be run periodically. You might do this with <a href="https://en.wikipedia.org/wiki/Cron">cron</a>, <a href="https://wiki.archlinux.org/title/Systemd/Timers">systemd
+timers</a>, or the Windows equivalent.</p>
+<p>To subscribe to feeds you can run <code>rsspls</code> locally and use a feed reader that
+supports local file feeds. Or, more likely it is expected that <code>rsspls</code> will be
+run on a web server that is serving the directory the feeds are written to.</p>
+<h2 id="logging">Logging</h2>
+<p><code>rsspls</code> logs messages to <code>stderr</code>. Logging can be controlled by the
+<code>RSSPLS_LOG</code> environment variable. Log level and target module can controlled
+according to the <a href="https://docs.rs/env_logger/latest/env_logger/#enabling-logging">env_logger documentation</a>. For example, to enable
+debug logging for <code>rsspls</code> you would use:</p>
+<p><code>RSSPLS_LOG=rsspls=debug</code></p>
+<p>The supported log levels are:</p>
+<ul>
+<li><code>error</code></li>
+<li><code>warn</code></li>
+<li><code>info</code></li>
+<li><code>debug</code></li>
+<li><code>trace</code></li>
+<li><code>off</code> (disable logging)</li>
+</ul>
+<p>The default log level is <code>info</code>.</p>
+<h2 id="caveats-error-handling">Caveats &amp; Error Handling</h2>
+<p><code>rsspls</code> just fetches and parses the HTML of the web page you specify. It does
+not run JavaScript. If the website is entirely generated by JavaScript (such as
+Twitter) then <code>rsspls</code> will not work.</p>
+<p>If errors are encountered processing the page due to invalid selectors, or
+missing elements an error message will be logged. If the error is non-recoverable
+<code>rsspls</code> will exit with a non-zero exit status.</p>
+<p>If an error is encountered processing an item for the feed a warning will by
+logged and processing will continue with the next item. <code>rsspls</code> will still
+exit with success (0) in this case.</p>
+<h2 id="caching">Caching</h2>
+<p>When websites respond with cache headers <code>rsspls</code> will make a conditional
+request on subsequent runs and will not regenerate the feed if the server
+responds with 304 Not Modified. Cache data is stored in
+<code>$XDG_CACHE_HOME/rsspls</code>, which defaults to <code>~/.cache/rsspls</code> on UNIX-like
+systems or <code>C:\Users\You\AppData\Local\rsspls</code> on Windows.</p>
+
+
+        </div>
+
+        
+        
+    </main>
+
+    
+    <footer>
+        <small class="subtext">
+            Copyright ©  2024
+            <a href="https:&#x2F;&#x2F;www.wezm.net&#x2F;">Wesley Moore</a>
+            ⬩ <a href="https://forge.wezm.net/wezm/rsspls.7bit.org">Website Source</a>
+            ⬩ <a href="https://github.com/sponsors/wezm">Sponsor on GitHub</a>
+        </small>
+    </footer>
+    <script src="https://rsspls.7bit.org/home.js" type="text/javascript"></script>
+    <script data-goatcounter="https://rsspls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+</body>
+<script>
+    const scrollHandler = entries => {
+        // Find the first entry which intersecting and ratio > 0.9 to highlight.
+        let entry = entries.find(entry => {
+            return entry.isIntersecting && entry.intersectionRatio > 0.9;
+        });
+        if (!entry) return;
+
+        document.querySelectorAll(".toc a").forEach((item) => {
+            item.classList.remove("active");
+        });
+
+        // let url = new URL(`#${entry.target.id}`);
+        let link = document.querySelector(`.toc a[href$="${decodeURIComponent(`#${entry.target.id}`)}"]`)
+        if (link) {
+            link.classList.add("active");
+            link.scrollIntoView({ behavior: "auto", block: "nearest" });
+        }
+    };
+    // Set -100px root margin to improve highlight experience.
+    const observer = new IntersectionObserver(scrollHandler, { threshold: 1 });
+    let items = document.querySelectorAll('h1,h2,h3,h4,h5,h6');
+    items.forEach(item => observer.observe(item));
+</script>
+
+</html>
