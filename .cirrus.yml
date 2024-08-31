@@ -5,7 +5,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ENCRYPTED[0930789e1bd5f1277a5e01f43750cc6de7e2be51ee6d26a60e34b3f47b6b124c54fab9cbcb498f8f26b0f5df48b622c6]
 
 task:
-  name: Build (Debian Linux)
+  name: Build (Debian x86_64)
   container:
     image: debian:12-slim
     cpu: 4
@@ -17,7 +17,7 @@ task:
     - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
     - rustup target add x86_64-unknown-linux-musl
     - mkdir ~/bin
-    - curl -L https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.3.0/upload-to-s3-0.3.0-x86_64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
   test_script:
     - cargo test
   publish_script: |
@@ -27,6 +27,32 @@ task:
       tarball="rsspls-${tag}-x86_64-unknown-linux-musl.tar.gz"
       strip target/x86_64-unknown-linux-musl/release/rsspls
       tar zcf "$tarball" -C target/x86_64-unknown-linux-musl/release rsspls
+      ~/bin/upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
+    fi
+
+task:
+  name: Build (Debian aarch64)
+  arm_container:
+    image: debian:12-slim
+    cpu: 4
+  cargo_cache:
+    folder: $HOME/.cargo/registry
+    fingerprint_script: cat Cargo.lock
+  install_script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates curl gcc libc6-dev musl-tools
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
+    - rustup target add aarch64-unknown-linux-musl
+    - mkdir ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.3.0/upload-to-s3-0.3.0-aarch64-unknown-linux-musl.tar.gz | tar xzf - -C ~/bin
+  test_script:
+    - cargo test
+  publish_script: |
+    tag=$(git describe --exact-match HEAD 2>/dev/null || true)
+    if [ -n "$tag" ]; then
+      cargo build --release --locked --target aarch64-unknown-linux-musl
+      tarball="rsspls-${tag}-aarch64-unknown-linux-musl.tar.gz"
+      strip target/aarch64-unknown-linux-musl/release/rsspls
+      tar zcf "$tarball" -C target/aarch64-unknown-linux-musl/release rsspls
       ~/bin/upload-to-s3 -b releases.wezm.net "$tarball" "rsspls/$tag/$tarball"
     fi
 
@@ -41,7 +67,7 @@ task:
   install_script:
     - pkg install -y git-lite ca_root_nss
     - fetch -o - https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
-    - fetch -o - https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
+    - fetch -o - https://releases.wezm.net/upload-to-s3/0.3.0/upload-to-s3-0.3.0-amd64-unknown-freebsd.tar.gz | tar xzf - -C /usr/local/bin
   test_script:
     - cargo test
   publish_script: |
@@ -66,7 +92,7 @@ task:
   install_script:
     - curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_VERSION}
     - mkdir ~/bin
-    - curl -L https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-universal-apple-darwin.tar.gz | tar xzf - -C ~/bin
+    - curl -L https://releases.wezm.net/upload-to-s3/0.3.0/upload-to-s3-0.3.0-universal-apple-darwin.tar.gz | tar xzf - -C ~/bin
     - rustup target add x86_64-apple-darwin
   test_script:
     - cargo test
@@ -97,7 +123,7 @@ task:
   install_script:
     - Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
     - .\rustup-init -y --profile minimal --default-toolchain $env:RUST_VERSION
-    - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.2.0/upload-to-s3-0.2.0-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
+    - Invoke-WebRequest https://releases.wezm.net/upload-to-s3/0.3.0/upload-to-s3-0.3.0-x86_64-pc-windows-msvc.zip -OutFile upload-to-s3.zip
     - Expand-Archive upload-to-s3.zip -DestinationPath .
     - git fetch --tags
   # PowerShell it truly horrific and lacks a way to exit on external command failure so we have to check after every command
