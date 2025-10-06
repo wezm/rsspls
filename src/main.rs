@@ -124,6 +124,11 @@ async fn try_main() -> eyre::Result<bool> {
         }
     };
 
+    // Disable certificate verification if requested
+    if config.rsspls.insecure_disable_certificate_verification {
+        client_builder = client_builder.danger_accept_invalid_certs(true);
+    }
+
     let client = Client {
         file_urls: config.rsspls.file_urls,
         http: client_builder

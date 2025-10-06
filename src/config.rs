@@ -27,11 +27,16 @@ pub struct Config {
 
 #[derive(Debug, Deserialize)]
 pub struct RssplsConfig {
+    /// Output directory to use for saving feeds
     pub output: Option<String>,
+    /// Optional proxy to use for http requests
     pub proxy: Option<String>,
     /// Whether to allow fetching web pages from file URLs
     #[serde(default)]
     pub file_urls: bool,
+    /// Disable certificate verification for http requests
+    #[serde(default)]
+    pub insecure_disable_certificate_verification: bool,
 }
 
 #[derive(Debug, Deserialize)]
