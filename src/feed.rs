@@ -520,6 +520,7 @@ mod tests {
                 .to_string_lossy()
                 .into_owned(),
             user_agent: None,
+            post_update_hook: vec![],
             config,
         };
         let config_hash = ConfigHash(&html_file_name);
@@ -563,6 +564,7 @@ mod tests {
                 .with_extension("rss")
                 .to_string_lossy()
                 .into_owned(),
+            post_update_hook: vec![],
             user_agent: None,
             config,
         };

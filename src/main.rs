@@ -13,7 +13,7 @@ mod xdg;
 use crate::xdg as dirs;
 
 use std::path::{Path, PathBuf};
-use std::process::ExitCode;
+use std::process::{ExitCode, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::{env, fs};
@@ -21,7 +21,7 @@ use std::{env, fs};
 use atomicwrites::AtomicFile;
 use eyre::{eyre, Report, WrapErr};
 use futures::future;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::Client as HttpClient;
 use rss::Channel;
 use simple_eyre::eyre;
@@ -199,28 +199,60 @@ async fn process(
     }?;
     let cached_headers = deserialise_cached_headers(&cache_path, config_hash);
 
-    process_feed(client, feed, config_hash, &cached_headers)
+    let res = process_feed(client, feed, config_hash, &cached_headers)
         .await
-        .and_then(|ref process_result| {
-            match process_result {
-                ProcessResult::NotModified => Ok(()),
-                ProcessResult::Ok { channel, headers } => {
-                    // TODO: channel.validate()
-                    write_channel(channel, &output_path).wrap_err_with(|| {
-                        format!("unable to write output file: {}", output_path.display())
-                    })?;
+        .wrap_err_with(|| format!("error processing feed for {}", feed.config.url))?;
 
-                    // Update the cache
-                    if let Some(headers) = headers {
-                        debug!("write cache {}", cache_path.display());
-                        fs::write(cache_path, headers).wrap_err("unable to write to cache")?;
-                    }
+    match res {
+        ProcessResult::NotModified => Ok(()),
+        ProcessResult::Ok { channel, headers } => {
+            // TODO: channel.validate()
+            write_channel(&channel, &output_path).wrap_err_with(|| {
+                format!("unable to write output file: {}", output_path.display())
+            })?;
 
-                    Ok(())
-                }
+            // Update the cache
+            if let Some(headers) = headers {
+                debug!("write cache {}", cache_path.display());
+                fs::write(cache_path, headers).wrap_err("unable to write to cache")?;
             }
-        })
-        .wrap_err_with(|| format!("error processing feed for {}", feed.config.url))
+
+            run_hook(&feed.post_update_hook, &output_path).await?;
+            Ok(())
+        }
+    }
+}
+
+async fn run_hook(hook: &[String], feed_path: &Path) -> eyre::Result<()> {
+    if hook.is_empty() {
+        return Ok(());
+    }
+
+    let cmd = &hook[0];
+    let args = &hook[1..];
+
+    info!(
+        "running post-update hook: {} for {}",
+        cmd,
+        feed_path.display()
+    );
+
+    let output = tokio::process::Command::new(cmd)
+        .args(args)
+        .env("RSSPLS_FEED_FILE", feed_path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .await
+        .wrap_err_with(|| format!("failed to execute post-update hook: {}", cmd))?;
+
+    if !output.status.success() {
+        warn!(
+            "post-update hook for '{}' exited with non-zero status.\ncmd: {}, status: {}'\nstdout: {}\nstderr: {}",
+            feed_path.display(), cmd, output.status, String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr),
+        );
+    }
+    Ok(())
 }
 
 fn write_channel(channel: &Channel, output_path: &Path) -> Result<(), Report> {
@@ -297,5 +329,75 @@ mod tests {
 
         let expanded = expand_tilde(r"~\some\where", PathBuf::from(r"C:\"));
         assert_eq!(expanded, Path::new(r"C:\some\where"));
+    }
+
+    #[tokio::test]
+    async fn test_run_hook() {
+        let temp = env::temp_dir();
+        let marker = temp.join("hook_marker");
+        let feed = temp.join("feed.xml");
+
+        #[cfg(not(windows))]
+        let hook = vec![
+            "sh".into(),
+            "-c".into(),
+            format!("echo $RSSPLS_FEED_FILE > {}", marker.display()),
+        ];
+        #[cfg(windows)]
+        let hook = vec![
+            "cmd".into(),
+            "/c".into(),
+            format!("echo %RSSPLS_FEED_FILE% > {}", marker.display()),
+        ];
+
+        run_hook(&hook, &feed).await.unwrap();
+        assert!(fs::read_to_string(&marker)
+            .unwrap()
+            .contains(feed.to_str().unwrap()));
+    }
+
+    #[tokio::test]
+    async fn test_process_triggers_hook() {
+        let temp = env::temp_dir().join(format!("rsspls_test_{}", std::process::id()));
+        fs::create_dir_all(&temp).unwrap();
+        let marker = temp.join("hook_run");
+        let html = temp.join("t.html");
+        fs::write(&html, "<h2>t</h2>").unwrap();
+
+        #[cfg(not(windows))]
+        let hook = vec!["touch".into(), marker.to_str().unwrap().into()];
+        #[cfg(windows)]
+        let hook = vec![
+            "cmd".into(),
+            "/c".into(),
+            format!("echo. > {}", marker.display()),
+        ];
+
+        let feed = ChannelConfig {
+            title: "T".into(),
+            filename: "t.xml".into(),
+            user_agent: None,
+            post_update_hook: hook,
+            config: crate::config::FeedConfig {
+                url: url::Url::from_file_path(&html).unwrap().into(),
+                item: "h2".into(),
+                heading: "h2".into(),
+                link: None,
+                summary: vec![],
+                date: None,
+                media: None,
+            },
+        };
+
+        let client = Client {
+            file_urls: true,
+            http: HttpClient::new(),
+        };
+        let dirs = Arc::new(Mutex::new(crate::dirs::new().unwrap()));
+
+        process(&feed, &client, ConfigHash("hash"), temp, dirs)
+            .await
+            .unwrap();
+        assert!(marker.exists());
     }
 }
