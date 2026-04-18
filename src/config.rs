@@ -44,6 +44,8 @@ pub struct ChannelConfig {
     pub title: String,
     pub filename: String,
     pub user_agent: Option<String>,
+    #[serde(default)]
+    pub post_update_hook: Vec<String>,
     pub config: FeedConfig,
 }
 
