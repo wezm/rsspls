@@ -30,7 +30,7 @@ log = "0.4.22"
 mime_guess = { version = "2.0.5", default-features = false }
 pico-args = "0.5.0"
 pretty_env_logger = "0.5.0"
-reqwest = { version = "0.12.5", default-features = false, features = ["gzip", "socks"] }
+reqwest = { version = "0.13.2", default-features = false, features = ["gzip", "socks"] }
 rss = "2.0.8"
 serde = { version = "1.0.205", features = ["derive"] }
 simple-eyre = "0.3.1"
@@ -53,4 +53,4 @@ strip = "debuginfo"
 [features]
 default = ["rust-tls"]
 native-tls = ["reqwest/native-tls"]
-rust-tls = ["reqwest/rustls-tls"]
+rust-tls = ["reqwest/rustls"]
