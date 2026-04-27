@@ -46,7 +46,7 @@ news visit the [RSS Please website][website].
 Build From Source
 -----------------
 
-**Minimum Supported Rust Version:** 1.70.0
+**Minimum Supported Rust Version:** 1.85.0
 
 `rsspls` is implemented in Rust. See the Rust website for [instructions on
 installing the toolchain][rustup].
